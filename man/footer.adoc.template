@@ -1,0 +1,17 @@
+[[bugs]]
+== BUGS
+If you find a bug in this software or have a feature request, please file an issue at <https://github.com/cgzones/arpobserver/issues/new>.
+
+[[author]]
+== AUTHOR
+arpobserver is written by Christian Göttsche
+and based on addrwatch written by Julius Kriukas.
+
+[[resources]]
+== RESOURCES
+Main web site: <https://github.com/cgzones/arpobserver>
+
+[[copying]]
+== COPYING
+Copyright 2020-{docyear} Christian Göttsche +
+License: GPL-3.0 License <https://opensource.org/licenses/GPL-3.0>

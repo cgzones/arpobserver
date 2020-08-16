@@ -1,0 +1,30 @@
+Source: arpobserver
+Section: net
+Priority: optional
+Maintainer: Christian Göttsche <cgzones@googlemail.com>
+Build-Depends: asciidoctor,
+               check (>= 0.11.0),
+               debhelper-compat (= 13),
+               default-libmysqlclient-dev,
+               libevent-dev,
+               libpcap-dev,
+               libsqlite3-dev,
+               pkg-config
+Standards-Version: 4.5.0
+Rules-Requires-Root: no
+
+Package: arpobserver
+Architecture: any
+Depends: adduser, ${misc:Depends}, ${shlibs:Depends}
+Description: Monitoring network and log discovered ethernet/ip pairings
+ Main features of arpobserver:
+ .
+ IPv4 and IPv6 address monitoring
+ Monitoring multiple network interfaces with one daemon
+ Monitoring of VLAN tagged (802.1Q) packets.
+ Output to stdout, plain text file, syslog, sqlite3 db, MySQL db
+ IP address usage history preserving output/logging
+ .
+ arpobserver is extremely useful in networks with IPv6 autoconfiguration
+ (RFC4862) enabled. It allows one to track IPv6 addresses of hosts using IPv6
+ privacy extensions (RFC4941).

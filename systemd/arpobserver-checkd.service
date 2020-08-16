@@ -1,0 +1,27 @@
+[Unit]
+Description=arpobserver check daemon
+Documentation=man:arpobserver-checkd(8)
+After=arpobserverd.service
+Wants=arpobserverd.service
+
+[Service]
+User=arpobserver
+ExecStart=/usr/bin/arpobserver-checkd --syslog --state /var/lib/arpobserver/check.state
+Restart=on-failure
+
+# Hardening
+CapabilityBoundingSet=
+LockPersonality=yes
+PrivateNetwork=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

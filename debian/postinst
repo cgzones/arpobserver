@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -eu
+
+if [ "$1" = "configure" ]; then
+  adduser --system --group --quiet --gecos "arpobserver daemon" --no-create-home --home /var/lib/arpobserver arpobserver
+
+  chown arpobserver:arpobserver /var/lib/arpobserver
+fi
+
+#DEBHELPER#

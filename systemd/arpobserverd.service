@@ -1,0 +1,28 @@
+[Unit]
+Description=arpobserver main daemon
+Documentation=man:arpobserverd(8)
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/arpobserverd --syslog --quiet --user arpobserver eth0
+Restart=on-failure
+
+# Hardening
+CapabilityBoundingSet=CAP_NET_RAW CAP_SETGID CAP_SETUID
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+PrivateDevices=no
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=full
+RestrictNamespaces=yes
+RestrictRealtime=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,119 @@
+name: Main CI
+
+on: [push, pull_request]
+
+jobs:
+
+  build:
+    name: (${{ matrix.cc }}) Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [ 'gcc', 'clang-10' ]
+    env:
+      CC: ${{ matrix.cc }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: install clang repo
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+        sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' -y
+        sudo apt-get update -q
+    - name: install dependencies
+      run: sudo apt-get install -y clang-10 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
+    - name: install asciidoctor and check from Debian sid
+      run: |
+          wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
+          sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
+          sudo apt-get update -q
+          sudo apt-get install -y asciidoctor check
+    - name: bootstrap
+      run: ./bootstrap.sh
+    - name: configure
+      run: ./configure --enable-werror
+    - name: make
+      run: make
+    - name: make check
+      run: make check
+    - name: make distcheck
+      run: make distcheck
+
+  weverything_build:
+    name: Clang Weverything Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install clang repo
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+        sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' -y
+        sudo apt-get update -q
+    - name: install dependencies
+      run: sudo apt-get install -y clang-10 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
+    - name: install asciidoctor and check from Debian sid
+      run: |
+          wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
+          sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
+          sudo apt-get update -q
+          sudo apt-get install -y asciidoctor check
+    - name: bootstrap
+      run: ./bootstrap.sh
+    - name: configure
+      run: ./configure --enable-werror CC=clang-10 CFLAGS="-O2 -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align"
+    - name: make
+      run: make
+    - name: make check
+      run: make check
+
+  whitespace_check:
+    name: Whitespace Check
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: check-whitespaces
+        run: git diff-tree --check $(git hash-object -t tree /dev/null) HEAD
+
+  spelling_check:
+    name: Codespell Check
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: install codespell
+        run: |
+          wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
+          sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
+          sudo apt-get update -q
+          sudo apt-get install -y codespell
+      - name: run codespell
+        run: codespell -C2 -Lnd --skip .git
+
+  format_check:
+    name: Format Check
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: check-format
+        run: |
+          find src/ \( -iname '*.h' -o -iname '*.c' \) -execdir clang-format -i {} \;
+          find tests/ \( -iname '*.h' -o -iname '*.c' \) -execdir clang-format -i {} \;
+          git diff --exit-code
+
+  cppcheck:
+    name: Cppcheck
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: install cppcheck
+        run: sudo apt-get install -y cppcheck
+      - name: cppcheck
+        #--error-exitcode=2
+        run: cppcheck --enable=warning --force --inconclusive --library=std.cfg --library=posix.cfg --std=c11 --quiet --inline-suppr src/

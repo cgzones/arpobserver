@@ -1,0 +1,2 @@
+---
+Checks: '*,-llvm-header-guard,-llvmlibc-restrict-system-libc-headers,-bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,-hicpp-signed-bitwise,-google-readability-braces-around-statements,-hicpp-braces-around-statements,-readability-braces-around-statements,-cppcoreguidelines-init-variables,-misc-unused-parameters,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,-cppcoreguidelines-init-variables'

@@ -1,0 +1,252 @@
+arpobserverd(8)
+===============
+:doctype: manpage
+
+
+== NAME
+arpobserverd - ethernet/ip address monitoring tool
+
+
+[[synopsis]]
+== SYNOPSIS
+*arpobserverd* ['OPTIONS'] ['INTERFACES']
+
+
+[[description]]
+== DESCRIPTION
+*arpobserverd* is a similar software to *arpwatch*(8).
+It main purpose is to monitor network and log Ethernet/IP pairings.
+
+To simply try out *arpobserverd* start it without any arguments.
+When started without arguments it will open the first non loopback interface and start logging events to the console without writing anything to disk.
+All discovered Ethernet/IP address pairings will be printed to *stdout*.
+All debug, warning, and error messages will be printed to *stderr*.
+
+
+[[options]]
+== OPTIONS
+*--syslog*::
+    Log program messages to syslog (daemon facility).
+
+*-o*, *--output* 'file'::
+    Write discovered ethernet/ip address pairings to a specified 'file'.
+    See <<OUTPUT>> section for more details.
+
+*--sqlite3* 'sqlite3.db'::
+    Write discovered ethernet/ip address pairings to sqlite3 database in 'sqlite3.db' file.
+    Database file and tables are created during startup if does not exists.
+
+    Pairings are written in a table having such schema:
+----
+    CREATE TABLE arpobserver(
+        timestamp UNSIGNED BIG INT,
+        interface varchar(16),
+        vlan_tag UNSIGNED INT,
+        mac_address varchar(17),
+        ip_address varchar(42),
+        origin TINYINT
+    );
+----
+
+*--sqlite3-table* 'table'::
+    Use the table name 'table'.
+    The default is *arpobserver*.
+
+*-L*, *--shm-log-size* _num_::
+    Set the shared memory log size to _num_.
+    The default is 1024.
+
+*-m*, **--shm-log-nam** _name_::
+    Use _name_ as shared memory log name.
+    The default is '/arpobserver-shm-log'.
+
+*-q*, *--quiet*::
+    Suppress printing discovered Ethernet/IP address pairings to *stdout*.
+
+*-v*, *--verbose*::
+    Enable debug messages.
+
+*-4*, *--ipv4-only*::
+    Capture only IPv4 packets.
+
+*-6*, *--ipv6-only*::
+    Capture only IPv6 packets.
+
+*--ignore-ip* _IP_::
+    Ignore pairings with specified _IP_ address.
+    Can be specified multiple times.
+
+*-r*, *--ratelimit* _num_::
+  If _num_ is greater than 0, ratelimit duplicate ethernet/ip pairings to 1 every _num_ seconds.
+  If _num_ is equal 0, ratelimiting of duplicate entries is disabled.
+  If _num_ is equal -1, duplicate entries are suppressed indefinitely.
+  See <<RATELIMITING>> section for more details.
+
+*-H*, *--hashsize* _size_::
+    Size of ratelimiting hash table used to store recent Ethernet/Ip address pairings.
+    Minimum value is 1, maximum value is 65536.
+    Default value is 1 (no hash table), all pairings are stored in a linked list.
+
+    The size of hash table should be increased in active networks with many nodes.
+    Lager hash table speeds up cache lookups at the cost of increased memory usage.
+
+*-d*, *--daemon*::
+    Become a daemon after start.
+    This option implies *-q*.
+
+*-p*, *--pid* 'pidfile'::
+    Write process id to 'pidfile'.
+    The pidfile is deleted when application is terminated.
+    This option is usually used with *-d* argument.
+    When used with *-u* argument, 'pidfle' will be created before changing active user and in most cases *arpobserverd* will not be able to delete 'pidfile' on exit.
+
+*--no-promisc*::
+    Disable promisc mode on network interfaces.
+    Might limit the functionality of *arpobserverd*.
+
+*-u*, *--user* _username_::
+    Switch to user _username_ after opening network interfaces.
+    This is the recommend mode of operation.
+
+*-A*, *--all-interfaces*::
+    Capture on all available interfaces if no explicit interface is given as trailing command line argument.
+    By default only the first non loopback interface is used.
+
+*-h*, --help*::
+    Show command line arguments and exit.
+
+*-V*, *--version*::
+    Show version information and exit.
+
+
+[[output]]
+== OUTPUT
+In output file or *stdout* each line represents one Ethernet/IP address pairing discovery event.
+Event has following format:
+----
+    'unix timestamp' 'interface' 'vlan tag' 'mac address' 'ip address' 'packet type'
+----
+Packets without vlan tag is represented by tag value 0.
+Possible packet types are: ARP_REQ, ARP_REP, ARP_ACD, ND_ND, ND_NA, ND_DAD, ND_RA, ND_RS. +
+Ethernet address and IP address are extracted from different parts of the packet based on packet type.
+
+=== ARP_REQ
+ARP Request packet. Sender hardware address (from ARP header) and sender protocol address (from ARP header) is saved.
+
+=== ARP_REP
+ARP Reply packet. Sender hardware address (from ARP header) and sender protocol address (from ARP header) is saved.
+
+=== ARP_ACD
+ARP Address collision detection packet. Sender hardware address (from ARP header) and target protocol address (from ARP header) is saved.
+
+=== ND_NS
+Neighbor Solicitation packet. Source link-layer address (from NS option) and source address (from IPv6 header) is saved.
+
+=== ND_NA
+Neighbor Advertisement packet. Target link-layer address (from NA option) and source address (from IPv6 header) is saved.
+
+=== ND_DAD
+Duplicate Address Detection packet. Source MAC (from Ethernet header) and target address (from NS header) is saved.
+
+=== ND_RA
+Router Advertisement packet. Source link-layer address (from NS option) and source address (from IPv6 header) is saved.
+
+=== ND_RS
+Router Solicitation packet. Source link-layer address (from NS option) and source address (from IPv6 header) is saved.
+
+Output example:
+----
+timestamp iface vlan mac ip type
+1339405924 eth0 502 e0:ca:94:30:06:8b 2001:db8:200:4202:8946:e6b7:976a:cef3 ND_NA
+1339406009 eth0 257 f0:4d:a2:2e:ad:0d 169.254.227.85 ARP_ACD
+1339406018 eth0 502 58:1f:aa:d0:92:7d 2001:db8:200:4202:805d:b5ae:8374:436c ND_DAD
+1339406029 eth0 502 38:59:f9:3a:de:65 172.16.2.19 ARP_REP
+1339406030 eth0 12 00:c0:ee:5a:89:c7 10.1.32.221 ARP_REQ
+1339406030 eth0 252 00:1c:c0:79:ab:ee 2001:db8:200:2381::657b ND_NS
+----
+
+[[ratelimiting]]
+== RATELIMITING
+If used without ratelimiting arpobserverd reports etherment/ip pairing every time it gets usable ARP or IPv6 ND packet.
+In actively used networks it generates many duplicate pairings especially for routers and servers.
+
+Ratelimiting option *-r* _num_ suppress output of *duplicate* pairings for at least _num_ seconds (all non duplicate pairings will be reported).
+In other words if arpobserverd have discovered some pairing (mac,ip) it will not report (mac,ip) again unless _num_ seconds have passed.
+
+There is an exception to this rule to allow tracking ethernet address changes.
+If *arpobserverd* have discovered pairings: (mac1,ip),(mac2,ip),(mac1,ip) within ratelimit time window it will report all three pairings.
+By doing so ratelimiting will not lose any information about ethernet address changes.
+
+For example if we have a stream of events:
+----
+time   ethernet          ip
+01     11:22:33:44:55:66 192.168.0.1
+15     11:22:33:44:55:66 192.168.0.1
+20     aa:bb:cc:dd:ee:ff 192.168.0.1
+25     aa:bb:cc:dd:ee:ff 192.168.0.1
+30     11:22:33:44:55:66 192.168.0.1
+35     11:22:33:44:55:66 192.168.0.1
+40     aa:bb:cc:dd:ee:ff 192.168.0.1
+65     aa:bb:cc:dd:ee:ff 192.168.0.1
+----
+
+With *--ratelimit=100* we would get:
+----
+time   ethernet          ip
+01     11:22:33:44:55:66 192.168.0.1
+20     aa:bb:cc:dd:ee:ff 192.168.0.1
+30     11:22:33:44:55:66 192.168.0.1
+40     aa:bb:cc:dd:ee:ff 192.168.0.1
+----
+
+Without the exception output would be:
+----
+time   ethernet          ip
+01     11:22:33:44:55:66 192.168.0.1
+20     aa:bb:cc:dd:ee:ff 192.168.0.1
+----
+
+And we would lose information that address 192.168.0.1 was used by 11:22:33:44:55:66 between 30-40th seconds.
+
+To sum up ratelimiting reduces amount of duplicate information without losing any ethernet address change events.
+
+Ratelimit option essentially limits data granularity for IP address usage duration information (when and for what time period specific IP address was used).
+On the other hand without ratelimiting at all you would not get very precise IP address usage duration information anyways because some hosts might use IP address without sending ARP or ND packets as often as others do.
+
+If _num_ is set to 0, ratelimiting is disabled and all pairing discovery events are reported.
+
+If _num_ is set to -1, ratelimiting is enabled with infinitely long time window therefore all duplicate pairings are suppressed indefinitely.
+In this mode arpobserverd acts almost as arpwatch with the exception that ethernet address changes are still reported.
+
+It might look tempting to always use arpobserverd with *--ratelimit=-1* however by doing so you lose the information about when and for what period of time specific IP address was used.
+There will be no difference between temporary IPv6 addressed which was used once and statically configured permanent addresses.
+
+== NOTES
+You can send *SIGHUP* signal to *arpobserverd* to force it reopen output file.
+It may be useful if used in combination with *logrotate*(8).
+
+== EXAMPLES
+Start monitoring first non loopback network interface.
+Output will be send to *stdout*:
+
+    `arpobserverd`
+
+Start monitoring on multiple interfaces:
+
+    `arpobserverd eth0 eth1 eth2`
+
+Start arpobserverd as a daemon, write output to file, enable ratelimiting to 1 event per minute:
+
+    `arpobserverd -d -o /var/lib/arpobserver/output.dat -r 60 eth0`
+
+Start as a daemon, save pid file, send output to syslog, ratelimit to 1 event per hour, suid to nobody, monitor multiple interfaces:
+
+    `arpobserverd -d -p /run/arpobserverd.pid --syslog -r 3600 -u nobody eth0 eth1 eth3`
+
+
+[[see-also]]
+== SEE ALSO
+*arpobserver-checkd*(8)
+
+
+include::footer.adoc.template[]

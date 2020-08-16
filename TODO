@@ -1,0 +1,53 @@
+* ReadMe.md
+
+* mysql man page
+
+.TP
+.BI "-m[" database "], --mysql=[" database "]"
+Write discovered ethernet/ip address pairings to MySQL
+.IR database .
+Default MySQL server, login information and database should be specified in
+.B "~/.my.cnf"
+configuration file in
+.B "addrwatch"
+section. Example of
+.B "~/.my.cnf"
+configuration file:
+.nf
+.in +4
+[addrwatch]
+.RI "host=" "localhost"
+.RI "user=" "db_user"
+.RI "password=" "db_password"
+.RI "database=" "db_name"
+.in -4
+.fi
+
+Pairings are written in a table having such schema:
+.nf
+.in +4
+CREATE TABLE IF NOT EXISTS `addrwatch` (
+.in +4
+`tstamp` timestamp NOT NULL,
+`hostname` varchar(256) NOT NULL,
+`interface` varchar(16) NOT NULL,
+`vlan_tag` int(11) NOT NULL,
+`mac_address` varchar(17) NOT NULL,
+`ip_address` varchar(42) NOT NULL,
+`origin` varchar(8) NOT NULL,
+KEY `interface` (`interface`),
+KEY `vlan_tag` (`vlan_tag`),
+KEY `interface_vlan_tag` (`interface`,`vlan_tag`)
+.in -4
+)
+.in -4
+.fi
+Default table name is
+.B addrwatch
+unless option
+.B "--mysql-table"
+is specified.
+.TP
+.BI "--mysql-table=" "TBL"
+Insert data to MySQL table
+.IR TBL .

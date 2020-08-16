@@ -1,0 +1,51 @@
+arpobserver-checkd(8)
+=====================
+:doctype: manpage
+
+
+== NAME
+arpobserver-checkd - check Ethernet/IP pairings for notable changes
+
+
+[[synopsis]]
+== SYNOPSIS
+*arpobserver-checkd* ['OPTIONS']
+
+
+[[description]]
+== DESCRIPTION
+*arpobserver-checkd* listens to Ethernet/IP pairings events from *arpobserverd*(8) and checks for notable changes.
+It will alert about IP changes for the same MAC address and vice versa.
+Pairings will be forgotton after not seen for a lease time of 1 day.
+
+
+[[options]]
+== OPTIONS
+*-s*, *--state-file* 'statefile'::
+    Use the path 'statefile' as state file to save pairings.
+    The state file will be written all 5 minutes to recover after daemon restarts.
+    By default the state file is located at '/var/lib/arpobserver/check.state'.
+
+*--syslog*::
+    Log program messages to syslog (daemon facility).
+    By default messages are written to *stderr*.
+
+*-v*, *--verbose*::
+    Enable debug messages.
+
+*-h*, --help*::
+    Show command line arguments and exit.
+
+*-V*, *--version*::
+    Show version information and exit.
+
+== NOTES
+To be able to read the shared memory object of *arpobserverd*(8), *arpobserver-check* should be started as the same user *arpobserverd* switches to.
+
+
+[[see-also]]
+== SEE ALSO
+*arpobserverd*(8)
+
+
+include::footer.adoc.template[]
