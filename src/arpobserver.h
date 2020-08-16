@@ -98,4 +98,4 @@ struct arpobserver_config {
 };
 
 
-extern struct arpobserver_config cfg;
+extern struct arpobserver_config global_cfg;

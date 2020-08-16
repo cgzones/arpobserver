@@ -30,7 +30,7 @@
 #define DEFAULT_SHM_LOG_SIZE 1024
 
 
-struct arpobserver_config cfg;
+struct arpobserver_config global_cfg;
 
 // TODO: review
 static const char *const ip4_filter = "arp";
@@ -139,9 +139,9 @@ static int add_iface(const char *iface)
 
 	assert(iface);
 
-	if (cfg.v4_flag)
+	if (global_cfg.v4_flag)
 		filter = ip4_filter;
-	else if (cfg.v6_flag)
+	else if (global_cfg.v6_flag)
 		filter = ip6_filter;
 	else
 		filter = def_filter;
@@ -154,18 +154,18 @@ static int add_iface(const char *iface)
 	if (!ifc->name)
 		return log_oom();
 
-	if (cfg.hashsize < 1 || cfg.hashsize > 65536)
-		return log_errno_error(EINVAL, "%s: hash size (%d) must be >= 1 and <= 65536", __FUNCTION__, cfg.hashsize);
+	if (global_cfg.hashsize < 1 || global_cfg.hashsize > 65536)
+		return log_errno_error(EINVAL, "%s: hash size (%d) must be >= 1 and <= 65536", __FUNCTION__, global_cfg.hashsize);
 
-	if (cfg.ratelimit) {
-		ifc->cache = calloc((unsigned)cfg.hashsize, sizeof(struct mcache_node));
+	if (global_cfg.ratelimit) {
+		ifc->cache = calloc((unsigned)global_cfg.hashsize, sizeof(struct mcache_node));
 		if (!ifc->cache)
 			return log_oom();
 	}
 
-	ifc->pcap_handle = pcap_open_live(iface, SNAP_LEN, cfg.promisc_flag, 1000, errbuf);
+	ifc->pcap_handle = pcap_open_live(iface, SNAP_LEN, global_cfg.promisc_flag, 1000, errbuf);
 	if (ifc->pcap_handle == NULL) {
-		if (cfg.all_interfaces)
+		if (global_cfg.all_interfaces)
 			log_info("Skipping interface %s: cannot open: %s", iface, errbuf);
 		else
 			log_warn("Skipping interface %s: cannot open: %s", iface, errbuf);
@@ -174,7 +174,7 @@ static int add_iface(const char *iface)
 
 	rc = pcap_datalink(ifc->pcap_handle);
 	if (rc != DLT_EN10MB) {
-		if (cfg.all_interfaces)
+		if (global_cfg.all_interfaces)
 			log_info("Skipping interface %s: invalid data link layer %s (%s).", iface, pcap_datalink_val_to_name(rc),
 				 pcap_datalink_val_to_description(rc));
 		else
@@ -185,7 +185,7 @@ static int add_iface(const char *iface)
 
 	rc = pcap_compile(ifc->pcap_handle, &ifc->pcap_filter, filter, 0, 0);
 	if (rc == -1) {
-		if (cfg.all_interfaces)
+		if (global_cfg.all_interfaces)
 			log_info("Skipping interface %s: cannot compile filter: %s", iface, pcap_geterr(ifc->pcap_handle));
 		else
 			log_warn("Skipping interface %s: cannot compile filter: %s", iface, pcap_geterr(ifc->pcap_handle));
@@ -194,7 +194,7 @@ static int add_iface(const char *iface)
 
 	rc = pcap_setfilter(ifc->pcap_handle, &ifc->pcap_filter);
 	if (rc == -1) {
-		if (cfg.all_interfaces)
+		if (global_cfg.all_interfaces)
 			log_info("Skipping iface %s: cannot set filter: %s", iface, pcap_geterr(ifc->pcap_handle));
 		else
 			log_warn("Skipping iface %s: cannot set filter: %s", iface, pcap_geterr(ifc->pcap_handle));
@@ -206,7 +206,7 @@ static int add_iface(const char *iface)
 	assert(rc != -1);
 
 #if HAVE_LIBEVENT2
-	ifc->event = event_new(cfg.eb, rc, EV_READ | EV_PERSIST, read_cb, ifc);
+	ifc->event = event_new(global_cfg.eb, rc, EV_READ | EV_PERSIST, read_cb, ifc);
 	if (!ifc->event) {
 		log_error("%s: event_new(...)", __FUNCTION__);
 		return -1;
@@ -220,8 +220,8 @@ static int add_iface(const char *iface)
 
 	log_info("Opened interface %s (%s).", iface, pcap_datalink_val_to_description(pcap_datalink(ifc->pcap_handle)));
 
-	ifc->next = cfg.interfaces;
-	cfg.interfaces = TAKE_PTR(ifc);
+	ifc->next = global_cfg.interfaces;
+	global_cfg.interfaces = TAKE_PTR(ifc);
 
 	return 0;
 }
@@ -239,7 +239,7 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 	log_debug("Closed interface %s", ifc->name);
 
 	if (ifc->cache) {
-		for (int i = 0; i < cfg.hashsize; i++) {
+		for (int i = 0; i < global_cfg.hashsize; i++) {
 			if (*(ifc->cache + i))
 				cache_prune(*(ifc->cache + i), ifc->cache + i);
 		}
@@ -276,7 +276,7 @@ static void stop_cb(int fd, short events, void *arg)
 	log_debug("Stopping output");
 
 #if HAVE_LIBEVENT2
-	event_base_loopbreak(cfg.eb);
+	event_base_loopbreak(global_cfg.eb);
 #else
 	event_loopbreak();
 #endif
@@ -313,9 +313,9 @@ static int libevent_init(void)
 
 	/* init */
 #if HAVE_LIBEVENT2
-	cfg.eb = event_base_new();
+	global_cfg.eb = event_base_new();
 
-	if (!cfg.eb) {
+	if (!global_cfg.eb) {
 		log_error("%s: event_base_new() failed", __FUNCTION__);
 		return -1;
 	}
@@ -325,38 +325,38 @@ static int libevent_init(void)
 
 	/* SIGINT */
 #if HAVE_LIBEVENT2
-	cfg.sigint_ev = event_new(cfg.eb, SIGINT, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(cfg.sigint_ev, NULL);
+	global_cfg.sigint_ev = event_new(global_cfg.eb, SIGINT, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
+	event_add(global_cfg.sigint_ev, NULL);
 #else
-	event_set(&cfg.sigint_ev, SIGINT, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(&cfg.sigint_ev, NULL);
+	event_set(&global_cfg.sigint_ev, SIGINT, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
+	event_add(&global_cfg.sigint_ev, NULL);
 #endif
 
 	/* SIGTERM */
 #if HAVE_LIBEVENT2
-	cfg.sigterm_ev = event_new(cfg.eb, SIGTERM, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(cfg.sigterm_ev, NULL);
+	global_cfg.sigterm_ev = event_new(global_cfg.eb, SIGTERM, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
+	event_add(global_cfg.sigterm_ev, NULL);
 #else
-	event_set(&cfg.sigterm_ev, SIGTERM, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(&cfg.sigterm_ev, NULL);
+	event_set(&global_cfg.sigterm_ev, SIGTERM, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
+	event_add(&global_cfg.sigterm_ev, NULL);
 #endif
 
 	/* SIGHUP */
 #if HAVE_LIBEVENT2
-	cfg.sighup_ev = event_new(cfg.eb, SIGHUP, EV_SIGNAL | EV_PERSIST, reload_cb, NULL);
-	event_add(cfg.sighup_ev, NULL);
+	global_cfg.sighup_ev = event_new(global_cfg.eb, SIGHUP, EV_SIGNAL | EV_PERSIST, reload_cb, NULL);
+	event_add(global_cfg.sighup_ev, NULL);
 #else
-	event_set(&cfg.sighup_ev, SIGHUP, EV_SIGNAL | EV_PERSIST, reload_cb, NULL);
-	event_add(&cfg.sighup_ev, NULL);
+	event_set(&global_cfg.sighup_ev, SIGHUP, EV_SIGNAL | EV_PERSIST, reload_cb, NULL);
+	event_add(&global_cfg.sighup_ev, NULL);
 #endif
 
 	/* timeout */
 #if HAVE_LIBEVENT2
-	cfg.timeout_ev = event_new(cfg.eb, -1, EV_PERSIST, timeout_cb, NULL);
-	event_add(cfg.timeout_ev, &timeout);
+	global_cfg.timeout_ev = event_new(global_cfg.eb, -1, EV_PERSIST, timeout_cb, NULL);
+	event_add(global_cfg.timeout_ev, &timeout);
 #else
-	event_set(&cfg.timeout_ev, -1, EV_PERSIST, timeout_cb, NULL);
-	event_add(&cfg.timeout_ev, &timeout);
+	event_set(&global_cfg.timeout_ev, -1, EV_PERSIST, timeout_cb, NULL);
+	event_add(&global_cfg.timeout_ev, &timeout);
 #endif
 
 	return 0;
@@ -365,11 +365,11 @@ static int libevent_init(void)
 static void libevent_close(void)
 {
 #if HAVE_LIBEVENT2
-	event_free(cfg.sigint_ev);
-	event_free(cfg.sigterm_ev);
-	event_free(cfg.sighup_ev);
+	event_free(global_cfg.sigint_ev);
+	event_free(global_cfg.sigterm_ev);
+	event_free(global_cfg.sighup_ev);
 
-	event_base_free(cfg.eb);
+	event_base_free(global_cfg.eb);
 #endif
 }
 
@@ -377,12 +377,12 @@ static void save_pid(void)
 {
 	FILE *f;
 
-	if (!cfg.pid_file)
+	if (!global_cfg.pid_file)
 		return;
 
-	f = fopen(cfg.pid_file, "we");
+	f = fopen(global_cfg.pid_file, "we");
 	if (!f) {
-		log_error("Cannot open pid file '%s': %m", cfg.pid_file);
+		log_error("Cannot open pid file '%s': %m", global_cfg.pid_file);
 		return;
 	}
 
@@ -392,11 +392,11 @@ static void save_pid(void)
 
 static void del_pid(void)
 {
-	if (!cfg.pid_file)
+	if (!global_cfg.pid_file)
 		return;
 
-	if (unlink(cfg.pid_file) < 0)
-		log_warn("Cannot delete pid file '%s': %m", cfg.pid_file);
+	if (unlink(global_cfg.pid_file) < 0)
+		log_warn("Cannot delete pid file '%s': %m", global_cfg.pid_file);
 }
 
 static void usage(void)
@@ -475,22 +475,22 @@ int main(int argc, char *argv[])
 	};
 
 	/* Default configuration */
-	memset(&cfg, 0, sizeof(cfg));
-	cfg.all_interfaces = false;
-	cfg.daemon_flag = false;
-	cfg.ratelimit = 0;
-	cfg.hashsize = 1;
-	cfg.quiet = false;
-	cfg.promisc_flag = 1;
-	cfg.ratelimit = 0;
-	cfg.sqlite_file = NULL;
-	cfg.uname = NULL;
-	cfg.shm_data.size = DEFAULT_SHM_LOG_SIZE;
-	cfg.shm_data.name = DEFAULT_SHM_LOG_NAME;
-	cfg.v4_flag = false;
-	cfg.v6_flag = false;
+	memset(&global_cfg, 0, sizeof(global_cfg));
+	global_cfg.all_interfaces = false;
+	global_cfg.daemon_flag = false;
+	global_cfg.ratelimit = 0;
+	global_cfg.hashsize = 1;
+	global_cfg.quiet = false;
+	global_cfg.promisc_flag = 1;
+	global_cfg.ratelimit = 0;
+	global_cfg.sqlite_file = NULL;
+	global_cfg.uname = NULL;
+	global_cfg.shm_data.size = DEFAULT_SHM_LOG_SIZE;
+	global_cfg.shm_data.name = DEFAULT_SHM_LOG_NAME;
+	global_cfg.v4_flag = false;
+	global_cfg.v6_flag = false;
 #if HAVE_LIBSQLITE3
-	cfg.sqlite_table = PACKAGE;
+	global_cfg.sqlite_table = PACKAGE;
 #endif
 
 	for (;;) {
@@ -507,29 +507,29 @@ int main(int argc, char *argv[])
 			break;
 
 		case '4':
-			cfg.v4_flag = true;
-			cfg.v6_flag = false;
+			global_cfg.v4_flag = true;
+			global_cfg.v6_flag = false;
 			break;
 
 		case '6':
-			cfg.v6_flag = true;
-			cfg.v4_flag = false;
+			global_cfg.v6_flag = true;
+			global_cfg.v4_flag = false;
 			break;
 
 		case 'A':
-			cfg.all_interfaces = true;
+			global_cfg.all_interfaces = true;
 			break;
 
 		case 'd':
-			cfg.daemon_flag = true;
+			global_cfg.daemon_flag = true;
 			__attribute__((fallthrough));
 		case 'q':
-			cfg.quiet = true;
+			global_cfg.quiet = true;
 			break;
 
 		case 'H':
-			cfg.hashsize = (int)strtol(optarg, NULL, 10);
-			if (cfg.hashsize < 1 || cfg.hashsize > 65536)
+			global_cfg.hashsize = (int)strtol(optarg, NULL, 10);
+			if (global_cfg.hashsize < 1 || global_cfg.hashsize > 65536)
 				exit(EXIT_FAILURE);
 			break;
 
@@ -539,40 +539,40 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			cfg.shm_data.size = (uint64_t)strtol(optarg, NULL, 10);
-			if (cfg.shm_data.size < 1)
+			global_cfg.shm_data.size = (uint64_t)strtol(optarg, NULL, 10);
+			if (global_cfg.shm_data.size < 1)
 				exit(EXIT_FAILURE);
 			break;
 
 		case 'm':
-			cfg.shm_data.name = optarg;
+			global_cfg.shm_data.name = optarg;
 			break;
 
 		case 'o':
-			cfg.data_file = optarg;
+			global_cfg.data_file = optarg;
 			break;
 
 		case 'p':
-			cfg.pid_file = optarg;
+			global_cfg.pid_file = optarg;
 			break;
 
 		case ARG_NO_PRMOISC:
-			cfg.promisc_flag = 0;
+			global_cfg.promisc_flag = 0;
 			break;
 
 		case 'r':
-			cfg.ratelimit = (int)strtol(optarg, NULL, 10);
-			if (cfg.ratelimit < -1)
+			global_cfg.ratelimit = (int)strtol(optarg, NULL, 10);
+			if (global_cfg.ratelimit < -1)
 				exit(EXIT_FAILURE);
 			break;
 
 #if HAVE_LIBSQLITE3
 		case ARG_SQLITE3_FILE:
-			cfg.sqlite_file = optarg;
+			global_cfg.sqlite_file = optarg;
 			break;
 
 		case ARG_SQLITE3_TABLE:
-			cfg.sqlite_table = optarg;
+			global_cfg.sqlite_table = optarg;
 			break;
 #endif
 
@@ -581,7 +581,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'u':
-			cfg.uname = optarg;
+			global_cfg.uname = optarg;
 			break;
 
 		case 'h':
@@ -604,7 +604,7 @@ int main(int argc, char *argv[])
 
 	log_open(MAIN_ARGV0);
 
-	if (cfg.daemon_flag) {
+	if (global_cfg.daemon_flag) {
 		log_mode(LOG_MODE_SYSLOG);
 
 		if (daemonize(NULL) < 0)
@@ -620,20 +620,20 @@ int main(int argc, char *argv[])
 	if (libevent_init() < 0)
 		return EXIT_FAILURE;
 
-	if (cfg.ratelimit > 0)
-		log_debug("Ratelimiting duplicate entries to 1 per %d seconds.", cfg.ratelimit);
-	else if (cfg.ratelimit == -1)
+	if (global_cfg.ratelimit > 0)
+		log_debug("Ratelimiting duplicate entries to 1 per %d seconds.", global_cfg.ratelimit);
+	else if (global_cfg.ratelimit == -1)
 		log_debug("Duplicate entries suppressed indefinitely.");
 	else
 		log_debug("Duplicate entries ratelimiting disabled.");
 
-	if (cfg.promisc_flag)
+	if (global_cfg.promisc_flag)
 		log_info("PROMISC mode enabled.");
 	else
 		log_info("PROMISC mode disabled.");
 
 	if (optind < argc) {
-		cfg.all_interfaces = false;
+		global_cfg.all_interfaces = false;
 		for (int i = optind; i < argc; i++)
 			add_iface(argv[i]);
 	} else {
@@ -648,7 +648,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (alldevsp) {
-			if (cfg.all_interfaces) {
+			if (global_cfg.all_interfaces) {
 				for (const pcap_if_t *devsp = alldevsp; devsp; devsp = devsp->next) {
 					if (devsp->flags & PCAP_IF_LOOPBACK)
 						continue;
@@ -662,13 +662,13 @@ int main(int argc, char *argv[])
 		pcap_freealldevs(alldevsp);
 	}
 
-	if (!cfg.interfaces) {
+	if (!global_cfg.interfaces) {
 		log_error("No suitable interfaces found!");
 		return EXIT_FAILURE;
 	}
 
-	if (cfg.uname) {
-		if (drop_root(cfg.uname) < 0)
+	if (global_cfg.uname) {
+		if (drop_root(global_cfg.uname) < 0)
 			return EXIT_FAILURE;
 	} else
 		log_notice("Not dropping root permissions.");
@@ -690,7 +690,7 @@ int main(int argc, char *argv[])
 
 	/* main loop */
 #if HAVE_LIBEVENT2
-	event_base_dispatch(cfg.eb);
+	event_base_dispatch(global_cfg.eb);
 #else
 	event_dispatch();
 #endif
@@ -701,7 +701,7 @@ int main(int argc, char *argv[])
 	output_sqlite_close();
 	output_flatfile_close();
 
-	for (struct iface_config *ifc = cfg.interfaces; ifc; ifc = del_iface(ifc)) {}
+	for (struct iface_config *ifc = global_cfg.interfaces; ifc; ifc = del_iface(ifc)) {}
 
 	libevent_close();
 	log_close();

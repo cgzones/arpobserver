@@ -104,9 +104,9 @@ void save_pairing(const struct pkt *p)
 
 	tstamp = p->pcap_header->ts.tv_sec;
 
-	if (cfg.ratelimit) {
+	if (global_cfg.ratelimit) {
 		hash = pkt_hash(p->l2_addr, p->ip_addr, p->ip_len, p->vlan_tag);
-		hash = hash % (uint16_t)cfg.hashsize;
+		hash = hash % (uint16_t)global_cfg.hashsize;
 		if (cache_lookup(p->l2_addr, p->ip_addr, p->ip_len, tstamp, p->vlan_tag, p->ifc->cache + hash))
 			return;
 	}
@@ -119,7 +119,7 @@ void save_pairing(const struct pkt *p)
 	}
 
 	(void)!output_shm_save(p, mac_str, ip_str);
-	if (!cfg.quiet) {
+	if (!global_cfg.quiet) {
 		printf("%lu %s %u %s %s %s\n", tstamp, p->ifc->name, p->vlan_tag, mac_str, ip_str, pkt_origin_str[p->origin]);
 		fflush(stdout);
 	}
@@ -127,10 +127,10 @@ void save_pairing(const struct pkt *p)
 	(void)!output_flatfile_save(p, mac_str, ip_str);
 
 #if HAVE_LIBSQLITE3
-	if (cfg.sqlite_file)
+	if (global_cfg.sqlite_file)
 		(void)!output_sqlite_save(p, mac_str, ip_str);
 #endif
 
-	if (cfg.ratelimit)
+	if (global_cfg.ratelimit)
 		(void)!cache_add(p->l2_addr, p->ip_addr, p->ip_len, tstamp, p->vlan_tag, p->ifc->cache + hash);
 }

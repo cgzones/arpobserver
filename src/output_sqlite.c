@@ -30,24 +30,24 @@ int output_sqlite_init()
 	char create_query[sizeof(sqlite_create_template) + 64];
 	char insert_query[sizeof(sqlite_insert_template) + 64];
 
-	if (!cfg.sqlite_file) {
+	if (!global_cfg.sqlite_file) {
 		log_debug("No sqlite3 database specified. Skipping initialization...");
 		return 0;
 	}
 
-	snprintf(create_query, sizeof(create_query), sqlite_create_template, cfg.sqlite_table);
-	snprintf(insert_query, sizeof(insert_query), sqlite_insert_template, cfg.sqlite_table);
+	snprintf(create_query, sizeof(create_query), sqlite_create_template, global_cfg.sqlite_table);
+	snprintf(insert_query, sizeof(insert_query), sqlite_insert_template, global_cfg.sqlite_table);
 
-	rc = sqlite3_open(cfg.sqlite_file, &sqlite_conn);
+	rc = sqlite3_open(global_cfg.sqlite_file, &sqlite_conn);
 	if (rc) {
-		log_error("Unable to open sqlite3 database file '%s'", cfg.sqlite_file);
+		log_error("Unable to open sqlite3 database file '%s'", global_cfg.sqlite_file);
 		return -1;
 	}
 
 	log_debug("Using sqlite3 create query: %s", create_query);
 	rc = sqlite3_exec(sqlite_conn, create_query, 0, 0, 0);
 	if (rc) {
-		log_error("Error creating table '%s' in sqlite3 database", cfg.sqlite_table);
+		log_error("Error creating table '%s' in sqlite3 database", global_cfg.sqlite_table);
 		return -1;
 	}
 
@@ -59,7 +59,7 @@ int output_sqlite_init()
 	}
 
 	sqlite3_busy_timeout(sqlite_conn, 100);
-	log_debug("Saving results to sqlite3 database '%s'", cfg.sqlite_file);
+	log_debug("Saving results to sqlite3 database '%s'", global_cfg.sqlite_file);
 #endif
 	return 0;
 }

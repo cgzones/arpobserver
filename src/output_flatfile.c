@@ -10,17 +10,17 @@ static FILE *data_fd = NULL;
 
 int output_flatfile_init()
 {
-	if (!cfg.data_file) {
+	if (!global_cfg.data_file) {
 		log_debug("No flatfile specified. Skipping initialization...");
 		return 0;
 	}
 
-	data_fd = fopen(cfg.data_file, "ae");
+	data_fd = fopen(global_cfg.data_file, "ae");
 	if (!data_fd)
-		return log_error("Unable to open flat file '%s': %m", cfg.data_file);
+		return log_error("Unable to open flat file '%s': %m", global_cfg.data_file);
 
 
-	log_debug("Saving results to '%s' flat file", cfg.data_file);
+	log_debug("Saving results to '%s' flat file", global_cfg.data_file);
 	return 0;
 }
 
@@ -37,7 +37,7 @@ int output_flatfile_save(const struct pkt *p, const char *mac_str, const char *i
 	assert(mac_str);
 	assert(ip_str);
 
-	if (!cfg.data_file) {
+	if (!global_cfg.data_file) {
 		log_debug("No flatfile specified. Skipping save...");
 		return 0;
 	}

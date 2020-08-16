@@ -94,7 +94,7 @@ struct mcache_node *cache_lookup(const uint8_t *l2_addr,
 		 * If we find old cache node we can safely delete it and all
 		 * following nodes.
 		 */
-		if (cfg.ratelimit > 0 && tstamp > node->tstamp + cfg.ratelimit) {
+		if (global_cfg.ratelimit > 0 && tstamp > node->tstamp + global_cfg.ratelimit) {
 			cache_prune(node, cache);
 			return NULL;
 		}
