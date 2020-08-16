@@ -3,6 +3,8 @@ arpobserver
 
 [![Build](https://github.com/cgzones/arpobserver/workflows/Main%20CI/badge.svg)](https://github.com/cgzones/arpobserver/actions?query=workflow%3Amain)
 [![GitHub license](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://raw.githubusercontent.com/cgzones/arpobserver/master/COPYING)
+[![LGTM: C/C++](https://img.shields.io/lgtm/grade/cpp/g/cgzones/arpobserver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cgzones/arpobserver/context:cpp)
+[![deepcode](https://www.deepcode.ai/api/gh/badge?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwbGF0Zm9ybTEiOiJnaCIsIm93bmVyMSI6ImNnem9uZXMiLCJyZXBvMSI6ImFycG9ic2VydmVyIiwiaW5jbHVkZUxpbnQiOmZhbHNlLCJhdXRob3JJZCI6MTU0NzAsImlhdCI6MTU5NzYwMzk5Mn0.YcvC48MNyaiTfhU9-J33gdYZSliOmNnjieR6qzYwXmI)](https://www.deepcode.ai/app/gh/cgzones/arpobserver/_/dashboard?utm_content=gh%2Fcgzones%2Farpobserver)
 
 Arpobserver is a tool similar to [arpwatch](https://ee.lbl.gov/). It main purpose is to monitor the network and
 act on discovered Ethernet/IP pairings. Arpobserver has been forked of from
