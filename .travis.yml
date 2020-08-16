@@ -1,0 +1,36 @@
+os: linux
+dist: bionic
+language: c
+
+git:
+  depth: 3
+
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "U5krhKJ5TmN+/9NkEtZKK7UeRJcLeewqP8dFDaNGl7l05h6AiW3kT1eRxbtaB3kQICBD3huRjnmvMfc6Wi3zkDG40oOtwIrXNJrWHBuoNJnVakVrV2+FW/OMZ+ewnSri8Fps71se62KIVJNZwr8QtxEToRgA04rALms4n/gunvACehF/zOB5Ml0OgdbEfE1DXiWM0ip28AHMxg0IKRLogdnkHnek3HyBUBfLyBMvUBSi6ktaCCbfFDcimWcYY/Kg0LnmkLScLY+cgoEfQ7birLsLuiJUcul0lRR4Jwhce5IAqap9YE7Zm4XePOKHbJkqcWUjDldfsDyXJCkv3KH2q/5y7I4JzKAhrYFJH+qHT2epPtQzXGEMr/oSgY4v8AzMguDFjgRQwYnITwySr3txzg9/KDNcBZuwR3zVQyf+yFlZ0z8A6QSJOr73mUGGGIXojTdSeqbiXUaSO1KgW0JKj2nKL9Rj1IPlPbPMRTXl8khwEz4t1Gn0q2vqKmPflvlM/nlHWwk/h/MWmHEp/qXq40Y+BjY+CqtXa/EtkOGih2vh7XixVmDgNU6eUV4b0RYCRPF8e65RYMFO+ZTTvX3ANxDEyJGg7NntpQ18MJw6Rv5f95Fm8wun6yXUtzOKHLGi8MrR0BbuUyVj/ikbu5jMEP3XxqQrrc0nCncbCgTRZZg="
+
+
+addons:
+  apt:
+    packages:
+      - default-libmysqlclient-dev
+      - libevent-dev
+      - libpcap-dev
+      - libsqlite3-dev
+      - pkg-config
+      - automake
+  coverity_scan:
+    project:
+      name: "cgzones/arpobserver"
+      description: "Build submitted via Travis CI"
+    notification_email: cgzones@googlemail.com
+    build_command_prepend: "./autogen.sh && ./configure --disable-man --disable-silent-rules --without-check --with-mysql --with-sqlite3 --enable-werror && make clean"
+    build_command: "make"
+    branch_pattern: coverity_scan
+
+
+script:
+  - cat "${TRAVIS_BUILD_DIR}/cov-int/scm_log.txt"
