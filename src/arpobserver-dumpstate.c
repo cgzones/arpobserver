@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 	_cleanup_dllist_ struct dllist_head *state = NULL;
 	struct stat statbuf;
 	char state_mtime_str[32];
+	struct tm timeresult;
 
 	const struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	strftime(state_mtime_str, sizeof(state_mtime_str), "%Y-%m-%d %H:%M:%S %z", localtime(&statbuf.st_mtime));
+	strftime(state_mtime_str, sizeof(state_mtime_str), "%Y-%m-%d %H:%M:%S %z", localtime_r(&statbuf.st_mtime, &timeresult));
 	printf("State file last updated: %s\n", state_mtime_str);
 
 	return EXIT_SUCCESS;

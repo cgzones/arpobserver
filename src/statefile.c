@@ -183,6 +183,7 @@ void dump_state(const struct dllist_head *state)
 {
 	time_t current;
 	char current_time_str[32];
+	struct tm timeresult;
 
 	assert(state);
 
@@ -204,14 +205,14 @@ void dump_state(const struct dllist_head *state)
 			if (convert_ip_addr_to_str(data->ip_address, data->ip_len, ip_str) < 0)
 				snprintf(ip_str, sizeof(ip_str), CONVERSION_FAILURE_STR);
 
-			strftime(last_updated, sizeof(last_updated), "%Y-%m-%d %H:%M:%S %z", localtime(&data->timestamp));
+			strftime(last_updated, sizeof(last_updated), "%Y-%m-%d %H:%M:%S %z", localtime_r(&data->timestamp, &timeresult));
 
 			printf("  %32s  %16s  %18s  %s\n", last_updated, data->interface, mac_str, ip_str);
 		}
 	}
 
 	current = time(NULL);
-	strftime(current_time_str, sizeof(current_time_str), "%Y-%m-%d %H:%M:%S %z", localtime(&current));
+	strftime(current_time_str, sizeof(current_time_str), "%Y-%m-%d %H:%M:%S %z", localtime_r(&current, &timeresult));
 	printf("\nCurrent time:            %s\n", current_time_str);
 }
 

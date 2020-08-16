@@ -59,6 +59,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			char cur_mac_str[MAC_STR_LEN];
 			char cur_ip_str[INET6_ADDRSTRLEN];
 			const struct shm_log_entry *data = cur_e->data;
+			struct tm timeresult;
 
 			assert(data);
 
@@ -69,7 +70,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 				continue;
 			}
 
-			strftime(last_updated, sizeof(last_updated), "%Y-%m-%d %H:%M:%S %z", localtime(&data->timestamp));
+			strftime(last_updated, sizeof(last_updated), "%Y-%m-%d %H:%M:%S %z", localtime_r(&data->timestamp, &timeresult));
 
 			log_debug("  cache entry %3lu: %s %16s %18s %s", i, last_updated, data->interface, cur_mac_str, cur_ip_str);
 			i++;
