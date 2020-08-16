@@ -1,6 +1,6 @@
-extraction: 
+extraction:
   cpp:
    configure:
       command:
-        - ./bootstrap
+        - ./bootstrap.sh
         - ./configure --without-check
