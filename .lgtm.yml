@@ -1,6 +1,0 @@
-extraction:
-  cpp:
-   configure:
-      command:
-        - ./bootstrap.sh
-        - ./configure --without-check

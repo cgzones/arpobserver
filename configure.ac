@@ -13,12 +13,15 @@ AC_CHECK_LIB([pcap], [pcap_open_live], [], [AC_MSG_ERROR([pcap library is requir
 AC_CHECK_LIB([rt], [shm_open], [], [AC_MSG_ERROR([shm framework is required!])])
 
 AC_ARG_WITH([check],
-    [AS_HELP_STRING([--without-check],
-        [Build without testsuite depending on Check (default: Build with testsuite)])],
+    [AS_HELP_STRING([--with-check],
+        [Build with testsuite depending on Check (yes,no,check) @<:@default=check@:>@])],
     [with_check=${withval}],
-    [with_check=yes])
+    [with_check=check])
+AS_CASE(["$with_check"],
+    [yes], [PKG_CHECK_MODULES([CHECK], [check >= 0.11.0], [], [AC_MSG_ERROR([Check not found])])],
+    [no], [],
+    [PKG_CHECK_MODULES([CHECK], [check >= 0.11.0], [with_check=yes], [with_check=no])])
 AM_CONDITIONAL([WITH_CHECK], [test "x$with_check" = "xyes"])
-AS_IF([test "x$with_check" = "xyes"], [PKG_CHECK_MODULES([CHECK], [check >= 0.11.0], [], [AC_MSG_ERROR([Check not found])])])
 
 PKG_CHECK_MODULES(LIBEVENT, [libevent >= 1.4], , [
     AC_CHECK_LIB([event], [event_dispatch], , [
