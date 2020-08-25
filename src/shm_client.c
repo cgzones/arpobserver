@@ -15,10 +15,14 @@
 
 static void close_log(struct shm_log **log, size_t mem_size)
 {
+	int r;
+
 	assert(log);
 	assert(*log);
 
-	(void)munmap(*log, mem_size);
+	r = munmap(*log, mem_size);
+	if (r < 0)
+		log_error("Error unmapping shared memory: %m");
 }
 
 static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
