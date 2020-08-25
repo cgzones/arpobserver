@@ -69,7 +69,7 @@ static int wait_for_active_log(const struct shm_log *log)
 {
 	int timeout = (2 * TIMEOUT_SEC + 1) / WAIT_INTERVAL_SEC;
 
-	while (log->magic != MAGIC && !log->active && timeout-- > 0)
+	while ((log->magic != MAGIC || !log->active) && timeout-- > 0)
 		sleep(WAIT_INTERVAL_SEC);
 
 	return timeout > 0 ? 0 : -EAGAIN;
