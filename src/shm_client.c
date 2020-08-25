@@ -13,11 +13,12 @@
 #include "cleanup.h"
 #include "log.h"
 
-static void close_log(void *addr, size_t mem_size)
+static void close_log(struct shm_log **log, size_t mem_size)
 {
-	assert(addr);
+	assert(log);
+	assert(*log);
 
-	(void)munmap(addr, mem_size);
+	(void)munmap(*log, mem_size);
 }
 
 static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
@@ -85,8 +86,10 @@ int main_loop(entry_callback_t cb, const volatile sig_atomic_t *stop_loop, void 
 		return r;
 
 	r = wait_for_active_log(log);
-	if (r < 0)
+	if (r < 0) {
+		close_log(&log, mem_size);
 		return log_error("Shared memory object did not get active.");
+	}
 
 	idx = log->last_idx;
 
@@ -104,8 +107,10 @@ int main_loop(entry_callback_t cb, const volatile sig_atomic_t *stop_loop, void 
 				return r;
 
 			r = wait_for_active_log(log);
-			if (r < 0)
+			if (r < 0) {
+				close_log(&log, mem_size);
 				return log_error("Shared memory object did not get active.");
+			}
 
 			log_info("Shared memory object re-opened.");
 
@@ -134,6 +139,8 @@ int main_loop(entry_callback_t cb, const volatile sig_atomic_t *stop_loop, void 
 
 		cb(&log->data[idx], arg);
 	}
+
+	close_log(&log, mem_size);
 
 	return 0;
 }
