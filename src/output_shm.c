@@ -19,8 +19,20 @@ int output_shm_init()
 	void *addr;
 
 	fd = shm_open(global_cfg.shm_data.name, O_CREAT | O_EXCL | O_CLOEXEC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
-	if (fd < 0)
-		return log_error("Error creating shared memory object '%s': %m", global_cfg.shm_data.name);
+	if (fd < 0) {
+		int r;
+
+		if (errno != EEXIST)
+			return log_error("Error creating shared memory object '%s': %m", global_cfg.shm_data.name);
+
+		r = shm_unlink(global_cfg.shm_data.name);
+		if (r < 0)
+			return log_error("Error removing shared memory object '%s': %m", global_cfg.shm_data.name);
+
+		fd = shm_open(global_cfg.shm_data.name, O_CREAT | O_EXCL | O_CLOEXEC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+		if (fd < 0)
+			return log_error("Error creating shared memory object '%s': %m", global_cfg.shm_data.name);
+	}
 
 	if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
 		if (errno == EWOULDBLOCK) {
