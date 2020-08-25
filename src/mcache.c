@@ -21,7 +21,7 @@ void cache_prune(struct mcache_node *dead_node, struct mcache_node **cache)
 		for (node = *cache; node && node->next != dead_node; node = node->next) {}
 
 		/* Assert that dead_node was found in the cache */
-		assert(node->next == dead_node);
+		assert(node && node->next == dead_node);
 		node->next = NULL;
 	}
 
@@ -44,7 +44,7 @@ void cache_del(struct mcache_node *dead_node, struct mcache_node **cache)
 	else {
 		for (node = *cache; node && node->next != dead_node; node = node->next) {}
 
-		assert(node->next == dead_node);
+		assert(node && node->next == dead_node);
 		node->next = dead_node->next;
 	}
 
