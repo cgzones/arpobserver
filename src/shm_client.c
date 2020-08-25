@@ -125,7 +125,7 @@ int main_loop(entry_callback_t cb, const volatile sig_atomic_t *stop_loop, void 
 		if (idx == log->last_idx) {
 			time_t now = time(NULL);
 			time_t time_passed = now - last_event;
-			if (time_passed > 2 * TIMEOUT_SEC + 2 && now - last_notified > 5 * 60) {
+			if (time_passed > (2 * TIMEOUT_SEC + 2) && (now - last_notified) > (5 * 60)) {
 				last_notified = time(NULL);
 				log_warn("No event received for %ld seconds, timeout is %u.", time_passed, TIMEOUT_SEC);
 			}
@@ -135,9 +135,10 @@ int main_loop(entry_callback_t cb, const volatile sig_atomic_t *stop_loop, void 
 		}
 
 		idx = (idx + 1) % log->size;
+		last_event = time(NULL);
 
+		/* do not forward timeout pings */
 		if (log->data[idx].ip_len == (uint8_t)-1) {
-			last_event = time(NULL);
 			continue;
 		}
 
