@@ -155,7 +155,7 @@ static int stmt_init(struct ctx_s *data)
 		return -1;
 	}
 
-	len = strlen(sql_insert_log_template) + strlen(data->prefix);
+	len = strlen(sql_insert_log_template) + strlen(data->prefix) + 1;
 	buf = malloc(len);
 	if (!buf)
 		return log_oom();
