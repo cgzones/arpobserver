@@ -240,7 +240,10 @@ static int setup_signals(void)
 	new_sig.sa_flags = SA_RESTART;
 
 	if (sigaction(SIGINT, &new_sig, &old_sig) < 0)
-		return log_error("Cannot setup signal handler: %m");
+		return log_error("Cannot setup signal handler for SIGINT: %m");
+
+	if (sigaction(SIGTERM, &new_sig, &old_sig) < 0)
+		return log_error("Cannot setup signal handler for SIGTERM: %m");
 
 	return 0;
 }
