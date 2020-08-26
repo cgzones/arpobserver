@@ -105,15 +105,15 @@ jobs:
           find tests/ \( -iname '*.h' -o -iname '*.c' \) -execdir clang-format -i {} \;
           git diff --exit-code
 
-  cppcheck:
-    name: Cppcheck
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: install cppcheck
-        run: sudo apt-get install -y cppcheck
-      - name: cppcheck
-        #--error-exitcode=2
-        run: cppcheck --enable=warning --force --inconclusive --library=std.cfg --library=posix.cfg --std=c11 --quiet --inline-suppr src/
+#  cppcheck:
+#    name: Cppcheck
+#
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: install cppcheck
+#        run: sudo apt-get install -y cppcheck
+#      - name: cppcheck
+#        #--error-exitcode=2
+#        run: cppcheck --enable=warning --force --inconclusive --library=std.cfg --library=posix.cfg --std=c11 --quiet --inline-suppr src/
