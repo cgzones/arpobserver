@@ -31,8 +31,7 @@ int convert_mac_str_to_addr(const char *str, uint8_t addr[])
 	assert(str);
 	assert(addr);
 
-	rc = sscanf(str, "%02x:%02x:%02x:%02x:%02x:%02x", (unsigned *)&addr[0], (unsigned *)&addr[1], (unsigned *)&addr[2],
-		    (unsigned *)&addr[3], (unsigned *)&addr[4], (unsigned *)&addr[5]);
+	rc = sscanf(str, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", &addr[0], &addr[1], &addr[2], &addr[3], &addr[4], &addr[5]);
 
 	return rc == 6 ? 0 : -EINVAL;
 }
