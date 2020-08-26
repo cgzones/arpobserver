@@ -38,6 +38,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 	struct dllist_head *state = arg;
 	char mac_str[MAC_STR_LEN];
 	char ip_str[INET6_ADDRSTRLEN];
+	const struct protect_entry *found_match;
 
 	assert(e);
 	assert(state);
@@ -79,8 +80,21 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		}
 	}
 
-	if (protect_match(e->mac_address, e->ip_address, e->ip_len)) {
-		log_warn("chk: node conflicts with protected entry: IF = %s, MAC = %s, IP = %s", e->interface, mac_str, ip_str);
+	found_match = protect_match(e->mac_address, e->ip_address, e->ip_len);
+	if (found_match) {
+		char protected_mac_str[MAC_STR_LEN];
+		char protected_ip_str[INET6_ADDRSTRLEN];
+		int r;
+
+		convert_mac_addr_to_str(found_match->mac_address, protected_mac_str);
+		if (e->ip_len == IP4_LEN)
+			r = convert_ip4_addr_to_str(found_match->ip4_address, protected_ip_str);
+		else
+			r = convert_ip6_addr_to_str(found_match->ip6_address, protected_ip_str);
+		if (r < 0)
+			snprintf(protected_ip_str, sizeof(protected_ip_str), CONVERSION_FAILURE_STR);
+
+		log_warn("chk: node (IF = %s, MAC = %s, IP = %s) conflicts with protected entry: MAC = %s, IP = %s", e->interface, mac_str, ip_str, protected_mac_str, protected_ip_str);
 		return;
 	}
 
@@ -131,7 +145,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 
 				convert_mac_addr_to_str(data->mac_address, mac_str_del);
 
-				log_debug("chk: deleted outdated cache entry: IF = %s, MAC = %s IP = %s", data->interface, mac_str_del,
+				log_debug("chk: deleted outdated cache entry: IF = %s, MAC = %s, IP = %s", data->interface, mac_str_del,
 					  ip_str_del);
 			}
 
@@ -362,6 +376,8 @@ int main(int argc, char *argv[])
 
 	if (parse_config_file(config_path, config_accept) < 0)
 		return EXIT_FAILURE;
+
+	log_info("Loaded %zu protected entries.", protect_list_size());
 
 	state_fd = lock_state_file(state_file_path);
 	if (state_fd < 0)
