@@ -127,7 +127,7 @@ void save_pairing(const struct pkt *p)
 	(void)!output_flatfile_save(p, mac_str, ip_str);
 
 #if HAVE_LIBSQLITE3
-	if (global_cfg.sqlite_file)
+	if (global_cfg.sqlite_filename)
 		(void)!output_sqlite_save(p, mac_str, ip_str);
 #endif
 

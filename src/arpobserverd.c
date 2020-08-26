@@ -15,6 +15,7 @@
 
 #include "arpobserver.h"
 #include "check_packet.h"
+#include "configfile.h"
 #include "daemonize.h"
 #include "log.h"
 #include "mcache.h"
@@ -27,6 +28,7 @@
 #include "storage.h"
 
 #define MAIN_ARGV0           "arpobserverd"
+#define DEFAULT_CONFIG_PATH  SYSCONFDIR "/" PACKAGE "/main.conf"
 #define DEFAULT_SHM_LOG_SIZE 1024
 
 
@@ -239,7 +241,7 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 	log_debug("Closed interface %s", ifc->name);
 
 	if (ifc->cache) {
-		for (int i = 0; i < global_cfg.hashsize; i++) {
+		for (unsigned i = 0; i < global_cfg.hashsize; i++) {
 			if (*(ifc->cache + i))
 				cache_prune(*(ifc->cache + i), ifc->cache + i);
 		}
@@ -399,35 +401,139 @@ static void del_pid(void)
 		log_warn("Cannot delete pid file '%s': %m", global_cfg.pid_file);
 }
 
+static int config_accept(const char *key, const char *value)
+{
+	if (0 == strcmp("HashSize", key)) {
+		char *endptr;
+		unsigned long int res = strtoul(value, &endptr, 10);
+		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= 65536)
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		global_cfg.hashsize = (unsigned)res;
+
+		return 0;
+	}
+
+	if (0 == strcmp("IgnoreIP", key)) {
+		if (value[0] == '\0')
+			return 0;
+
+		return ignorelist_add_ip(optarg);
+	}
+
+	if (0 == strcmp("IPMode", key)) {
+		if (0 == strcmp("all", value)) {
+			global_cfg.v4_flag = false;
+			global_cfg.v6_flag = false;
+
+			return 0;
+		}
+
+		if (0 == strcmp("ipv4", value)) {
+			global_cfg.v4_flag = true;
+			global_cfg.v6_flag = false;
+
+			return 0;
+		}
+
+		if (0 == strcmp("ipv6", value)) {
+			global_cfg.v4_flag = false;
+			global_cfg.v6_flag = true;
+
+			return 0;
+		}
+
+		return log_error("Invalid value '%s' for option %s.", value, key);
+	}
+
+	if (0 == strcmp("Promisc", key)) {
+		if (0 == strcmp("yes", value)) {
+			global_cfg.promisc_flag = 1;
+
+			return 0;
+		}
+
+		if (0 == strcmp("no", value)) {
+			global_cfg.promisc_flag = 0;
+
+			return 0;
+		}
+
+		return log_error("Invalid value '%s' for option %s.", value, key);
+	}
+
+	if (0 == strcmp("RateLimit", key)) {
+		char *endptr;
+		long int res = strtol(value, &endptr, 10);
+		if (res == LONG_MAX || *endptr != '\0' || res < -1 || res >= INT_MAX)
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		global_cfg.ratelimit = (int)res;
+
+		return 0;
+	}
+
+
+	if (0 == strcmp("ShmLogName", key)) {
+		if (value[0] != '/' || value[1] == '\0')
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		free(global_cfg.shm_data.filename);
+		global_cfg.shm_data.filename = strdup(value);
+		if (!global_cfg.shm_data.filename)
+			return log_oom();
+
+		return 0;
+	}
+
+	if (0 == strcmp("ShmLogSize", key)) {
+		char *endptr;
+		unsigned long int res = strtoul(value, &endptr, 10);
+		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= INT_MAX)
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		global_cfg.shm_data.size = res;
+
+		return 0;
+	}
+
+#if HAVE_LIBSQLITE3
+	if (0 == strcmp("Sqlite3File", key)) {
+		if (value[0] == '\0')
+			return 0;
+
+		free(global_cfg.sqlite_filename);
+		global_cfg.sqlite_filename = strdup(value);
+		if (!global_cfg.sqlite_filename)
+			return log_oom();
+
+		return 0;
+	}
+
+	if (0 == strcmp("Sqlite3Table", key)) {
+		free(global_cfg.sqlite_tablename);
+		global_cfg.sqlite_tablename = strdup(value);
+		if (!global_cfg.sqlite_tablename)
+			return log_oom();
+
+		return 0;
+	}
+#endif /* HAVE_LIBSQLITE3 */
+
+	return log_error("Unsupported configuration option '%s' (with value '%s').", key, value);
+}
+
 static void usage(void)
 {
 	printf("Usage: " MAIN_ARGV0 " [OPTIONS] [INTERFACES]\n"
 	       "Keep track of ethernet/ip address pairings for IPv4 and IPv6.\n"
 	       "\n"
 	       " Options for data output:\n"
-	       "  -L, --shm-log-size=NUM     Change shared memory log size (default: %s).\n"
-	       "  -m, --shm-log-name=NAME    Change shared memory log name (default: %s).\n"
 	       "  -o, --output=FILE          Output data to plain text FILE.\n"
 	       "  -q, --quiet                Suppress any output to stdout and stderr.\n"
-	       "      --sqlite3=FILE         Output data to sqlite3 database FILE.\n"
-	       "      --sqlite3-table=TBL    Use sqlite table TBL (default: %s).\n"
 	       "  -v, --verbose              Enable debug messages.\n"
-	       "\n"
-	       " Options for data filtering:\n"
-	       "  -4, --ipv4-only            Capture only IPv4 packets.\n"
-	       "  -6, --ipv6-only            Capture only IPv6 packets.\n"
-	       "      --ignore-ip=IP         Ignore pairings with specified IP.\n"
-	       "  -H, --hashsize=NUM         Size of ratelimit hash table. Default is 1 (no hash table).\n"
-	       "  -r, --ratelimit=NUM        Ratelimit duplicate ethernet/ip pairings to 1 every NUM seconds.\n"
-	       "                             If NUM = 0, ratelimiting is disabled.\n"
-	       "                             If NUM = -1, suppress duplicate entries indefinitely.\n"
-	       "                             Default is 0.\n"
 	       "\n"
 	       " Misc options:\n"
 	       "  -A, --all-interfaces       Capture on all available interfaces by default.\n"
+	       "  -c, --config=FILE          Read the configuration from FILE (default: %s).\n"
 	       "  -d, --daemon               Start as a daemon (implies '-q').\n"
 	       "  -p, --pid=FILE             Write process id to FILE.\n"
-	       "      --no-promisc           Disable promisc mode on network interfaces.\n"
 	       "      --syslog               Log to syslog instead of stderr.\n"
 	       "  -u, --user=USER            Switch to USER after opening network interfaces.\n"
 	       "\n"
@@ -436,42 +542,24 @@ static void usage(void)
 	       "\n"
 	       "If no interfaces given, the first non loopback interface is used (except '-A' is used).\n"
 	       "Ignoring IP address option '--ignore-ip' can be used multiple times.\n",
-	       STR(DEFAULT_SHM_LOG_SIZE), DEFAULT_SHM_LOG_NAME, PACKAGE);
+	       DEFAULT_CONFIG_PATH);
 }
 
-#define ARG_IGNORE_IP     128
-#define ARG_NO_PRMOISC    129
-#define ARG_SQLITE3_FILE  130
-#define ARG_SQLITE3_TABLE 131
-#define ARG_SYSLOG        132
+#define ARG_SYSLOG 128
 
 int main(int argc, char *argv[])
 {
 	bool syslog = false;
 	bool verbose = false;
+	const char *config_path = DEFAULT_CONFIG_PATH;
 
 	const struct option long_options[] = {
-		{"all-interfaces", no_argument, NULL, 'A'},
-		{"daemon", no_argument, NULL, 'd'},
-		{"hashsize", required_argument, NULL, 'H'},
-		{"help", no_argument, NULL, 'h'},
-		{"ignore-ip", required_argument, NULL, ARG_IGNORE_IP},
-		{"ipv4-only", no_argument, NULL, '4'},
-		{"ipv6-only", no_argument, NULL, '6'},
-		{"no-promisc", no_argument, NULL, ARG_NO_PRMOISC},
-		{"output", required_argument, NULL, 'o'},
-		{"pid", required_argument, NULL, 'p'},
-		{"quiet", no_argument, NULL, 'q'},
-		{"ratelimit", required_argument, NULL, 'r'},
-		{"shm-log-name", required_argument, NULL, 'm'},
-		{"shm-log-size", required_argument, NULL, 'L'},
-		{"sqlite3", required_argument, NULL, ARG_SQLITE3_FILE},
-		{"sqlite3-table", required_argument, NULL, ARG_SQLITE3_TABLE},
-		{"syslog", no_argument, NULL, ARG_SYSLOG},
-		{"user", required_argument, NULL, 'u'},
-		{"verbose", no_argument, NULL, 'v'},
-		{"version", no_argument, NULL, 'V'},
-		{0, 0, 0, 0},
+		{"all-interfaces", no_argument, NULL, 'A'}, {"config", required_argument, NULL, 'c'},
+		{"daemon", no_argument, NULL, 'd'},         {"help", no_argument, NULL, 'h'},
+		{"output", required_argument, NULL, 'o'},   {"pid", required_argument, NULL, 'p'},
+		{"quiet", no_argument, NULL, 'q'},          {"syslog", no_argument, NULL, ARG_SYSLOG},
+		{"user", required_argument, NULL, 'u'},     {"verbose", no_argument, NULL, 'v'},
+		{"version", no_argument, NULL, 'V'},        {0, 0, 0, 0},
 	};
 
 	/* Default configuration */
@@ -483,20 +571,20 @@ int main(int argc, char *argv[])
 	global_cfg.quiet = false;
 	global_cfg.promisc_flag = 1;
 	global_cfg.ratelimit = 0;
-	global_cfg.sqlite_file = NULL;
+	global_cfg.sqlite_filename = NULL;
 	global_cfg.uname = NULL;
 	global_cfg.shm_data.size = DEFAULT_SHM_LOG_SIZE;
-	global_cfg.shm_data.name = DEFAULT_SHM_LOG_NAME;
+	global_cfg.shm_data.filename = NULL;
 	global_cfg.v4_flag = false;
 	global_cfg.v6_flag = false;
 #if HAVE_LIBSQLITE3
-	global_cfg.sqlite_table = PACKAGE;
+	global_cfg.sqlite_tablename = NULL;
 #endif
 
 	for (;;) {
 		int option_index = 0;
 
-		int c = getopt_long(argc, argv, "Ab:dH:h46o:p:qr:m:L:u:vV", long_options, &option_index);
+		int c = getopt_long(argc, argv, "Ac:dho:p:qsu:vV", long_options, &option_index);
 
 		if (c == -1) {
 			break;
@@ -506,18 +594,12 @@ int main(int argc, char *argv[])
 		case 0:
 			break;
 
-		case '4':
-			global_cfg.v4_flag = true;
-			global_cfg.v6_flag = false;
-			break;
-
-		case '6':
-			global_cfg.v6_flag = true;
-			global_cfg.v4_flag = false;
-			break;
-
 		case 'A':
 			global_cfg.all_interfaces = true;
+			break;
+
+		case 'c':
+			config_path = optarg;
 			break;
 
 		case 'd':
@@ -527,26 +609,9 @@ int main(int argc, char *argv[])
 			global_cfg.quiet = true;
 			break;
 
-		case 'H':
-			global_cfg.hashsize = (int)strtol(optarg, NULL, 10);
-			if (global_cfg.hashsize < 1 || global_cfg.hashsize > 65536)
-				exit(EXIT_FAILURE);
-			break;
-
-		case ARG_IGNORE_IP:
-			if (ignorelist_add_ip(optarg) < 0)
-				exit(EXIT_FAILURE);
-			break;
-
-		case 'L':
-			global_cfg.shm_data.size = (uint64_t)strtol(optarg, NULL, 10);
-			if (global_cfg.shm_data.size < 1)
-				exit(EXIT_FAILURE);
-			break;
-
-		case 'm':
-			global_cfg.shm_data.name = optarg;
-			break;
+		case 'h':
+			usage();
+			exit(EXIT_SUCCESS);
 
 		case 'o':
 			global_cfg.data_file = optarg;
@@ -556,26 +621,6 @@ int main(int argc, char *argv[])
 			global_cfg.pid_file = optarg;
 			break;
 
-		case ARG_NO_PRMOISC:
-			global_cfg.promisc_flag = 0;
-			break;
-
-		case 'r':
-			global_cfg.ratelimit = (int)strtol(optarg, NULL, 10);
-			if (global_cfg.ratelimit < -1)
-				exit(EXIT_FAILURE);
-			break;
-
-#if HAVE_LIBSQLITE3
-		case ARG_SQLITE3_FILE:
-			global_cfg.sqlite_file = optarg;
-			break;
-
-		case ARG_SQLITE3_TABLE:
-			global_cfg.sqlite_table = optarg;
-			break;
-#endif
-
 		case ARG_SYSLOG:
 			syslog = true;
 			break;
@@ -583,10 +628,6 @@ int main(int argc, char *argv[])
 		case 'u':
 			global_cfg.uname = optarg;
 			break;
-
-		case 'h':
-			usage();
-			exit(EXIT_SUCCESS);
 
 		case 'v':
 			verbose = true;
@@ -614,6 +655,9 @@ int main(int argc, char *argv[])
 
 	if (verbose)
 		log_max_priority(LOG_DEBUG);
+
+	if (parse_config_file(config_path, config_accept) < 0)
+		return EXIT_FAILURE;
 
 	save_pid();
 
@@ -708,6 +752,10 @@ int main(int argc, char *argv[])
 
 	del_pid();
 	ignorelist_free();
+
+	free(global_cfg.shm_data.filename);
+	free(global_cfg.sqlite_filename);
+	free(global_cfg.sqlite_tablename);
 
 	return EXIT_SUCCESS;
 }

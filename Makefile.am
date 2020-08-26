@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = conf src
 
 if ENABLE_MAN
 SUBDIRS += man

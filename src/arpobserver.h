@@ -55,7 +55,7 @@ DEFINE_TRIVIAL_CLEANUP_FUNC(struct iface_config *, free_iface_config);
 
 struct arpobserver_config {
 	int ratelimit;
-	int hashsize;
+	unsigned hashsize;
 	bool quiet;
 
 	int promisc_flag;
@@ -71,13 +71,13 @@ struct arpobserver_config {
 
 	struct {
 		struct shm_log *log;
-		const char *name;
+		char *filename;
 		uint64_t size;
 	} shm_data;
 
 #if HAVE_LIBSQLITE3
-	const char *sqlite_file;
-	const char *sqlite_table;
+	char *sqlite_filename;
+	char *sqlite_tablename;
 #endif
 
 	struct event_base *eb;

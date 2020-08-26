@@ -13,6 +13,8 @@
 #include "cleanup.h"
 #include "log.h"
 
+char *shm_filename = NULL;
+
 static void close_log(struct shm_log **log, size_t mem_size)
 {
 	int r;
@@ -28,6 +30,7 @@ static void close_log(struct shm_log **log, size_t mem_size)
 static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
 {
 	_cleanup_close_ int fd = -1;
+	const char *path = shm_filename ?: DEFAULT_SHM_LOG_NAME;
 	struct stat info;
 	struct shm_log *addr;
 
@@ -35,10 +38,10 @@ static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
 	assert(log);
 
 	for (;;) {
-		fd = shm_open(DEFAULT_SHM_LOG_NAME, O_RDONLY, S_IRUSR | S_IWUSR);
+		fd = shm_open(path, O_RDONLY, S_IRUSR | S_IWUSR);
 		if (fd < 0) {
 			if (errno != ENOENT || timeout == 0)
-				return log_error("Cannot open shared memory object '%s': %m", DEFAULT_SHM_LOG_NAME);
+				return log_error("Cannot open shared memory object '%s': %m", path);
 
 			sleep(1);
 			timeout--;
@@ -48,7 +51,7 @@ static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
 	}
 
 	if (fstat(fd, &info) < 0)
-		return log_error("Cannot stat shared memory object '%s': %m", DEFAULT_SHM_LOG_NAME);
+		return log_error("Cannot stat shared memory object '%s': %m", path);
 
 	*mem_size = (size_t)info.st_size;
 	addr = mmap(NULL, *mem_size, PROT_READ, MAP_SHARED, fd, 0);
@@ -57,7 +60,7 @@ static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
 
 	if (close(TAKE_FD(fd)) < 0) {
 		(void)munmap(addr, *mem_size);
-		return log_error("Cannot close shared memory object '%s': %m", DEFAULT_SHM_LOG_NAME);
+		return log_error("Cannot close shared memory object '%s': %m", path);
 	}
 
 	*log = TAKE_PTR(addr);

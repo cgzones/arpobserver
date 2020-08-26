@@ -2,7 +2,7 @@
 
 #include "dllist.h"
 
-#define CHECK_DEFAULT_STATE_FILE "/var/lib/arpobserver/check.state"
+#define CHECK_DEFAULT_STATE_FILE LOCALSTATEDIR "/lib/" PACKAGE "/check.state"
 
 int lock_state_file(const char *path) _wur_;
 

@@ -14,6 +14,7 @@
 
 #include "cleanup.h"
 #include "config.h"
+#include "configfile.h"
 #include "dllist.h"
 #include "log.h"
 #include "protect.h"
@@ -21,7 +22,8 @@
 #include "shm_client.h"
 #include "statefile.h"
 
-#define CHECK_ARGV0 "arpobserver-checkd"
+#define CHECK_ARGV0         "arpobserver-checkd"
+#define DEFAULT_CONFIG_PATH SYSCONFDIR "/" PACKAGE "/check.conf"
 
 static const char *state_file_path = CHECK_DEFAULT_STATE_FILE;
 static bool verbose = false;
@@ -253,37 +255,55 @@ static void wrapper_free(void *p)
 	free_shm_log_entry(p);
 }
 
+static int config_accept(const char *key, const char *value)
+{
+	if (0 == strcmp("ProtectIP", key))
+		return protect_ip(value);
+
+	if (0 == strcmp("ProtectMAC", key))
+		return protect_mac(value);
+
+	if (0 == strcmp("ProtectMACIPPairing", key))
+		return protect_mac_ip_pairing(value);
+
+	if (0 == strcmp("ShmLogName", key)) {
+		if (value[0] != '/' || value[1] == '\0')
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		free(shm_filename);
+		shm_filename = strdup(value);
+		if (!shm_filename)
+			return log_oom();
+
+		return 0;
+	}
+
+	return log_error("Unsupported configuration option '%s' (with value '%s').", key, value);
+}
+
 static void usage(void)
 {
 	printf("Usage: " CHECK_ARGV0 " [OPTIONS]\n"
 	       "Daemon to check for suspicious address events.\n\n"
 	       "  -h, --help\t\t\tDisplay this menu.\n"
-	       "      --protect-ip=IP\t\tProtect the specified IP address.\n"
-	       "      --protect-mac=MAC\t\tProtect the specified MAC address.\n"
-	       "      --protect-pairing=MAC@IP\t\tProtect the specified MAC IP address pairing.\n"
 	       "  -s, --state=STATEFILE\t\tOverride the default state file (" CHECK_DEFAULT_STATE_FILE ").\n"
 	       "      --syslog\t\t\tLog via syslog (Defaults to stderr).\n"
 	       "  -v, --verbose\t\t\tEnable verbose output.\n"
 	       "  -V, --version\t\t\tShow version information and exit.\n");
 }
 
-#define ARG_PROTECT_IP      128
-#define ARG_PROTECT_MAC     129
-#define ARG_PROTECT_PAIRING 130
-#define ARG_SYSLOG          131
+#define ARG_SYSLOG 128
 
 int main(int argc, char *argv[])
 {
 	int rc;
+	const char *config_path = DEFAULT_CONFIG_PATH;
 	_cleanup_close_ int state_fd = -1;
 	enum log_mode lmode = LOG_MODE_STDERR;
 	_cleanup_dllist_ struct dllist_head *current_state = NULL;
 
 	const struct option long_options[] = {
+		{"config", required_argument, NULL, 'c'},
 		{"help", no_argument, NULL, 'h'},
-		{"protect-ip", required_argument, NULL, ARG_PROTECT_IP},
-		{"protect-mac", required_argument, NULL, ARG_PROTECT_MAC},
-		{"protect-pairing", required_argument, NULL, ARG_PROTECT_PAIRING},
 		{"state", required_argument, NULL, 's'},
 		{"syslog", no_argument, NULL, ARG_SYSLOG},
 		{"verbose", no_argument, NULL, 'v'},
@@ -294,7 +314,7 @@ int main(int argc, char *argv[])
 	for (;;) {
 		int option_index = 0;
 
-		int c = getopt_long(argc, argv, "hs:Vv", long_options, &option_index);
+		int c = getopt_long(argc, argv, "c:hs:Vv", long_options, &option_index);
 
 		if (c == -1) {
 			break;
@@ -302,6 +322,10 @@ int main(int argc, char *argv[])
 
 		switch (c) {
 		case 0:
+			break;
+
+		case 'c':
+			config_path = optarg;
 			break;
 
 		case 'h':
@@ -320,21 +344,6 @@ int main(int argc, char *argv[])
 			verbose = true;
 			break;
 
-		case ARG_PROTECT_IP:
-			if (protect_ip(optarg) < 0)
-				return EXIT_FAILURE;
-			break;
-
-		case ARG_PROTECT_MAC:
-			if (protect_mac(optarg) < 0)
-				return EXIT_FAILURE;
-			break;
-
-		case ARG_PROTECT_PAIRING:
-			if (protect_mac_ip_pairing(optarg) < 0)
-				return EXIT_FAILURE;
-			break;
-
 		case ARG_SYSLOG:
 			lmode = LOG_MODE_SYSLOG;
 			break;
@@ -350,6 +359,9 @@ int main(int argc, char *argv[])
 	log_mode(lmode);
 	if (verbose)
 		log_max_priority(LOG_DEBUG);
+
+	if (parse_config_file(config_path, config_accept) < 0)
+		return EXIT_FAILURE;
 
 	state_fd = lock_state_file(state_file_path);
 	if (state_fd < 0)
@@ -386,6 +398,8 @@ int main(int argc, char *argv[])
 	(void)!write_state_file(state_file_path, current_state);
 
 	free_protect_list();
+
+	free(shm_filename);
 
 	return rc ? EXIT_FAILURE : EXIT_SUCCESS;
 }

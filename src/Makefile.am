@@ -17,6 +17,8 @@ arpobserverd_SOURCES = arpobserverd.c			\
 		       base64.h				\
 		       check_packet.c			\
 		       check_packet.h			\
+		       configfile.c			\
+		       configfile.h			\
 		       daemonize.c			\
 		       daemonize.h			\
 		       mcache.c				\
@@ -36,6 +38,8 @@ arpobserverd_SOURCES = arpobserverd.c			\
 		       ${common_sources}
 
 arpobserver_checkd_SOURCES = arpobserver-checkd.c	\
+			     configfile.c		\
+			     configfile.h		\
 			     dllist.c			\
 			     dllist.h			\
 			     protect.c			\
@@ -69,5 +73,7 @@ arpobserver_mysql_SOURCES = arpobserver-mysql.c		\
 			    shm_client.c		\
 			    shm_client.h		\
 			    ${common_sources}
+
+AM_CFLAGS += -DSYSCONFDIR='"$(sysconfdir)"' -DLOCALSTATEDIR='"$(localstatedir)"'
 
 arpobserverd_LDADD = @LIBEVENT_LIBS@

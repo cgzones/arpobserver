@@ -60,7 +60,7 @@ jobs:
     - name: autogen
       run: ./autogen.sh
     - name: configure
-      run: ./configure --enable-werror CC=clang-10 CFLAGS="-O2 -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align"
+      run: ./configure --enable-werror CC=clang-10 CFLAGS="-O2 -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align"
     - name: make
       run: make
     - name: make check

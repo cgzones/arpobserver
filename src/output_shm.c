@@ -15,31 +15,32 @@
 int output_shm_init()
 {
 	_cleanup_close_ int fd = -1;
+	const char *shm_filename = global_cfg.shm_data.filename ?: DEFAULT_SHM_LOG_NAME;
 	const size_t mem_size = sizeof(struct shm_log) + sizeof(struct shm_log_entry) * global_cfg.shm_data.size;
 	void *addr;
 
-	fd = shm_open(global_cfg.shm_data.name, O_CREAT | O_EXCL | O_CLOEXEC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+	fd = shm_open(shm_filename, O_CREAT | O_EXCL | O_CLOEXEC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
 	if (fd < 0) {
 		int r;
 
 		if (errno != EEXIST)
-			return log_error("Error creating shared memory object '%s': %m", global_cfg.shm_data.name);
+			return log_error("Error creating shared memory object '%s': %m", shm_filename);
 
-		r = shm_unlink(global_cfg.shm_data.name);
+		r = shm_unlink(shm_filename);
 		if (r < 0)
-			return log_error("Error removing shared memory object '%s': %m", global_cfg.shm_data.name);
+			return log_error("Error removing shared memory object '%s': %m", shm_filename);
 
-		fd = shm_open(global_cfg.shm_data.name, O_CREAT | O_EXCL | O_CLOEXEC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+		fd = shm_open(shm_filename, O_CREAT | O_EXCL | O_CLOEXEC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
 		if (fd < 0)
-			return log_error("Error creating shared memory object '%s': %m", global_cfg.shm_data.name);
+			return log_error("Error creating shared memory object '%s': %m", shm_filename);
 	}
 
 	if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
 		if (errno == EWOULDBLOCK) {
-			return log_error("Cannot lock shared memory object '%s', already locked.", global_cfg.shm_data.name);
+			return log_error("Cannot lock shared memory object '%s', already locked.", shm_filename);
 		}
 
-		return log_error("Cannot lock shared memory object '%s': %m", global_cfg.shm_data.name);
+		return log_error("Cannot lock shared memory object '%s': %m", shm_filename);
 	}
 
 	if (ftruncate(fd, (off_t)mem_size) < 0) {
@@ -126,6 +127,7 @@ int output_shm_timeout()
 void output_shm_close()
 {
 	const size_t mem_size = sizeof(struct shm_log) + sizeof(struct shm_log_entry) * global_cfg.shm_data.size;
+	const char *shm_filename = global_cfg.shm_data.filename ?: DEFAULT_SHM_LOG_NAME;
 	int r;
 
 	global_cfg.shm_data.log->active = 0;
@@ -137,7 +139,7 @@ void output_shm_close()
 	if (r < 0)
 		log_error("Error unmapping shared memory: %m");
 
-	r = shm_unlink(global_cfg.shm_data.name);
+	r = shm_unlink(shm_filename);
 	if (r < 0)
-		log_warn("Error removing shared memory object '%s': %m", global_cfg.shm_data.name);
+		log_warn("Error removing shared memory object '%s': %m", shm_filename);
 }

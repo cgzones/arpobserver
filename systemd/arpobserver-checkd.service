@@ -6,7 +6,7 @@ Wants=arpobserverd.service
 
 [Service]
 User=arpobserver
-ExecStart=/usr/bin/arpobserver-checkd --syslog --state /var/lib/arpobserver/check.state
+ExecStart=/usr/bin/arpobserver-checkd --syslog
 Restart=on-failure
 
 # Hardening

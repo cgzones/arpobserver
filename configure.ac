@@ -108,8 +108,9 @@ AM_CONDITIONAL([ENABLE_MAN], [test "x$enable_man" = "xyes"])
 
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile
+                 conf/Makefile
                  man/Makefile
+                 src/Makefile
                  tests/Makefile])
 AC_OUTPUT
 

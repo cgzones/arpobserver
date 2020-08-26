@@ -26,28 +26,29 @@ static sqlite3_stmt *sqlite_stmt;
 int output_sqlite_init()
 {
 #if HAVE_LIBSQLITE3
+	const char *tablename = global_cfg.sqlite_tablename ?: PACKAGE;
 	int rc;
 	char create_query[sizeof(sqlite_create_template) + 64];
 	char insert_query[sizeof(sqlite_insert_template) + 64];
 
-	if (!global_cfg.sqlite_file) {
+	if (!global_cfg.sqlite_filename) {
 		log_debug("No sqlite3 database specified. Skipping initialization...");
 		return 0;
 	}
 
-	snprintf(create_query, sizeof(create_query), sqlite_create_template, global_cfg.sqlite_table);
-	snprintf(insert_query, sizeof(insert_query), sqlite_insert_template, global_cfg.sqlite_table);
+	snprintf(create_query, sizeof(create_query), sqlite_create_template, tablename);
+	snprintf(insert_query, sizeof(insert_query), sqlite_insert_template, tablename);
 
-	rc = sqlite3_open(global_cfg.sqlite_file, &sqlite_conn);
+	rc = sqlite3_open(global_cfg.sqlite_filename, &sqlite_conn);
 	if (rc) {
-		log_error("Unable to open sqlite3 database file '%s'", global_cfg.sqlite_file);
+		log_error("Unable to open sqlite3 database file '%s'", global_cfg.sqlite_filename);
 		return -1;
 	}
 
 	log_debug("Using sqlite3 create query: %s", create_query);
 	rc = sqlite3_exec(sqlite_conn, create_query, 0, 0, 0);
 	if (rc) {
-		log_error("Error creating table '%s' in sqlite3 database", global_cfg.sqlite_table);
+		log_error("Error creating table '%s' in sqlite3 database", tablename);
 		return -1;
 	}
 
@@ -59,7 +60,7 @@ int output_sqlite_init()
 	}
 
 	sqlite3_busy_timeout(sqlite_conn, 100);
-	log_debug("Saving results to sqlite3 database '%s'", global_cfg.sqlite_file);
+	log_debug("Saving results to sqlite3 database '%s'", global_cfg.sqlite_filename);
 #endif
 	return 0;
 }
