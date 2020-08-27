@@ -191,11 +191,11 @@ int protect_mac_ip_pairing(const char *mac_ip_str)
 		if (new_entry->ip6_set && found_entry->ip6_set)
 			return log_errno_warn(EINVAL, "Cannot protect pairing '%s': MAC and IPv6 already protected", mac_ip_str);
 
-		if (!found_entry->ip4_set) {
+		if (!found_entry->ip4_set && new_entry->ip4_set) {
 			memcpy(found_entry->ip4_address, new_entry->ip4_address, sizeof(found_entry->ip4_address));
 			found_entry->ip4_set = true;
 		}
-		if (!found_entry->ip6_set) {
+		if (!found_entry->ip6_set && new_entry->ip6_set) {
 			memcpy(found_entry->ip6_address, new_entry->ip6_address, sizeof(found_entry->ip6_address));
 			found_entry->ip6_set = true;
 		}
