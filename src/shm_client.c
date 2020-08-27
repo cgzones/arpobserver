@@ -65,11 +65,11 @@ static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
 	return 0;
 }
 
-static int wait_for_active_log(const struct shm_log *log)
+static int wait_for_active_log(const struct shm_log *log, const volatile sig_atomic_t *stop_loop)
 {
 	int timeout = (2 * TIMEOUT_SEC + 1) / WAIT_INTERVAL_SEC;
 
-	while ((log->magic != MAGIC || !log->active) && timeout-- > 0)
+	while ((log->magic != MAGIC || !log->active) && timeout-- > 0 && (stop_loop == NULL || !*stop_loop))
 		sleep(WAIT_INTERVAL_SEC);
 
 	return timeout > 0 ? 0 : -EAGAIN;
@@ -89,7 +89,7 @@ int main_loop(entry_callback_t cb, const volatile sig_atomic_t *stop_loop, void 
 	if (r < 0)
 		return r;
 
-	r = wait_for_active_log(log);
+	r = wait_for_active_log(log, stop_loop);
 	if (r < 0) {
 		close_log(&log, mem_size);
 		return log_error("Shared memory object did not get active.");
@@ -110,7 +110,7 @@ int main_loop(entry_callback_t cb, const volatile sig_atomic_t *stop_loop, void 
 			if (r < 0)
 				return r;
 
-			r = wait_for_active_log(log);
+			r = wait_for_active_log(log, stop_loop);
 			if (r < 0) {
 				close_log(&log, mem_size);
 				return log_error("Shared memory object did not get active.");
