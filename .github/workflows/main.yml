@@ -28,8 +28,8 @@ jobs:
           sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
           sudo apt-get update -q
           sudo apt-get install -y asciidoctor check
-    - name: bootstrap
-      run: ./bootstrap.sh
+    - name: autogen
+      run: ./autogen.sh
     - name: configure
       run: ./configure --enable-werror
     - name: make
@@ -57,8 +57,8 @@ jobs:
           sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
           sudo apt-get update -q
           sudo apt-get install -y asciidoctor check
-    - name: bootstrap
-      run: ./bootstrap.sh
+    - name: autogen
+      run: ./autogen.sh
     - name: configure
       run: ./configure --enable-werror CC=clang-10 CFLAGS="-O2 -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align"
     - name: make
