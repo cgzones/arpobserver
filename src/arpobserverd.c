@@ -526,13 +526,12 @@ static void usage(void)
 	       "\n"
 	       " Options for data output:\n"
 	       "  -o, --output=FILE          Output data to plain text FILE.\n"
-	       "  -q, --quiet                Suppress any output to stdout and stderr.\n"
 	       "  -v, --verbose              Enable debug messages.\n"
 	       "\n"
 	       " Misc options:\n"
 	       "  -A, --all-interfaces       Capture on all available interfaces by default.\n"
 	       "  -c, --config=FILE          Read the configuration from FILE (default: %s).\n"
-	       "  -d, --daemon               Start as a daemon (implies '-q').\n"
+	       "  -d, --daemon               Start as a daemon.\n"
 	       "  -p, --pid=FILE             Write process id to FILE.\n"
 	       "      --syslog               Log to syslog instead of stderr.\n"
 	       "  -u, --user=USER            Switch to USER after opening network interfaces.\n"
@@ -557,7 +556,7 @@ int main(int argc, char *argv[])
 		{"all-interfaces", no_argument, NULL, 'A'}, {"config", required_argument, NULL, 'c'},
 		{"daemon", no_argument, NULL, 'd'},         {"help", no_argument, NULL, 'h'},
 		{"output", required_argument, NULL, 'o'},   {"pid", required_argument, NULL, 'p'},
-		{"quiet", no_argument, NULL, 'q'},          {"syslog", no_argument, NULL, ARG_SYSLOG},
+		{"syslog", no_argument, NULL, ARG_SYSLOG},
 		{"user", required_argument, NULL, 'u'},     {"verbose", no_argument, NULL, 'v'},
 		{"version", no_argument, NULL, 'V'},        {0, 0, 0, 0},
 	};
@@ -568,7 +567,6 @@ int main(int argc, char *argv[])
 	global_cfg.daemon_flag = false;
 	global_cfg.ratelimit = 0;
 	global_cfg.hashsize = 1;
-	global_cfg.quiet = false;
 	global_cfg.promisc_flag = 1;
 	global_cfg.ratelimit = 0;
 	global_cfg.sqlite_filename = NULL;
@@ -584,11 +582,10 @@ int main(int argc, char *argv[])
 	for (;;) {
 		int option_index = 0;
 
-		int c = getopt_long(argc, argv, "Ac:dho:p:qsu:vV", long_options, &option_index);
+		int c = getopt_long(argc, argv, "Ac:dho:p:u:vV", long_options, &option_index);
 
-		if (c == -1) {
+		if (c == -1)
 			break;
-		}
 
 		switch (c) {
 		case 0:
@@ -604,9 +601,6 @@ int main(int argc, char *argv[])
 
 		case 'd':
 			global_cfg.daemon_flag = true;
-			__attribute__((fallthrough));
-		case 'q':
-			global_cfg.quiet = true;
 			break;
 
 		case 'h':

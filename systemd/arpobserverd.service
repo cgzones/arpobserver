@@ -4,7 +4,7 @@ Documentation=man:arpobserverd(8)
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/arpobserverd --syslog --quiet --user arpobserver eth0
+ExecStart=/usr/bin/arpobserverd --syslog --user arpobserver eth0
 Restart=on-failure
 
 # Hardening

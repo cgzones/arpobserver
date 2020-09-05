@@ -56,7 +56,6 @@ DEFINE_TRIVIAL_CLEANUP_FUNC(struct iface_config *, free_iface_config);
 struct arpobserver_config {
 	int ratelimit;
 	unsigned hashsize;
-	bool quiet;
 
 	int promisc_flag;
 	bool v4_flag;
