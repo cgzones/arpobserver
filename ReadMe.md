@@ -128,12 +128,6 @@ Example command to bootstrap autotools:
 Usage
 -----
 
-To simply try out arpobserver, start the main daemon without any arguments:
-
-```
-$ arpobserverd
-```
-
 When started like this arpobserverd opens first non loopback interface and start
 logging event to the console without writing anything to disk. All events
 are printed to stdout, debug, warning, and err messages are printed to stderr.
@@ -145,7 +139,7 @@ You should start arpobserverd as root but drop privileges by switching to a non
 privileged user:
 
 ```
-$ sudo arpobserverd --user myself
+$ sudo arpobserverd --user nobody
 ```
 
 You can specify which network interface or interfaces should be monitored by
@@ -161,6 +155,8 @@ To find out about more usage options:
 $ arpobserverd --help
 ```
 
+More detailed information can be found in the man pages in the 'man' directory.
+
 You can find example systemd service files in the 'systemd' directory.
 
 Ratelimiting
@@ -170,7 +166,7 @@ If used without ratelimiting arpobserver reports Etherment/IP pairing every time
 gets usable ARP or IPv6 ND packet. In actively used networks it generates many
 duplicate pairings especially for routers and servers.
 
-Ratelimiting option '-r NUM' or '--ratelimit=NUM' suppress output of duplicate
+Ratelimiting option 'RateLimit=NUM' suppress output of duplicate
 pairings for at least NUM seconds. In other words if arpobserver have discovered
 some pairing (mac,ip) it will not report (mac,ip) again unless NUM seconds have
 passed.
@@ -193,7 +189,7 @@ For example if we have a stream of events:
 | 0040 | aa:bb:cc:dd:ee:ff | 192.168.0.1
 | 0065 | aa:bb:cc:dd:ee:ff | 192.168.0.1
 
-With --ratelimit=100 we would get:
+With RateLimit=100 we would get:
 
 | time | MAC address       | IP address
 |------|-------------------|------------
@@ -231,7 +227,7 @@ therefore all duplicate pairings are suppressed indefinitely. In this mode
 arpobserver acts almost as arpwatch with the exception that ethernet address
 changes are still reported.
 
-It might look tempting to always use arpobserver with --ratelimit=-1 however by
+It might look tempting to always use arpobserver with RateLimit=-1 however by
 doing so you lose the information about when and for what period of time
 specific IP address was used. There will be no difference between temporary IPv6
 addressed which was used once and statically configured permanent addresses.

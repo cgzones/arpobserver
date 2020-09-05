@@ -526,7 +526,7 @@ static void usage(void)
 	       "\n"
 	       " Options for data output:\n"
 	       "  -o, --output=FILE          Output data to plain text FILE.\n"
-	       "  -v, --verbose              Enable debug messages.\n"
+	       "  -v, --verbose              Enable verbose output.\n"
 	       "\n"
 	       " Misc options:\n"
 	       "  -A, --all-interfaces       Capture on all available interfaces by default.\n"
@@ -539,8 +539,7 @@ static void usage(void)
 	       "  -h, --help                 Display this help and exit.\n"
 	       "  -V, --version              Show version information and exit.\n"
 	       "\n"
-	       "If no interfaces given, the first non loopback interface is used (except '-A' is used).\n"
-	       "Ignoring IP address option '--ignore-ip' can be used multiple times.\n",
+	       "If no interfaces given and '-A' not used, the first non loopback interface is used.\n",
 	       DEFAULT_CONFIG_PATH);
 }
 

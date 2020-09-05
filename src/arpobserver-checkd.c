@@ -298,11 +298,12 @@ static void usage(void)
 {
 	printf("Usage: " CHECK_ARGV0 " [OPTIONS]\n"
 	       "Daemon to check for suspicious address events.\n\n"
-	       "  -h, --help\t\t\tDisplay this menu.\n"
-	       "  -s, --state=STATEFILE\t\tOverride the default state file (" CHECK_DEFAULT_STATE_FILE ").\n"
-	       "      --syslog\t\t\tLog via syslog (Defaults to stderr).\n"
-	       "  -v, --verbose\t\t\tEnable verbose output.\n"
-	       "  -V, --version\t\t\tShow version information and exit.\n");
+	       "  -c, --config=FILE          Override the default configuration file (" DEFAULT_CONFIG_PATH ").\n"
+	       "  -h, --help                 Display this menu.\n"
+	       "  -s, --state=FILE           Override the default state file (" CHECK_DEFAULT_STATE_FILE ").\n"
+	       "      --syslog               Log via syslog (Default is stderr).\n"
+	       "  -v, --verbose              Enable verbose output.\n"
+	       "  -V, --version              Show version information and exit.\n");
 }
 
 #define ARG_SYSLOG 128

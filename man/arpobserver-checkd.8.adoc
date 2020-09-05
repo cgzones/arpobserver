@@ -21,9 +21,15 @@ Pairings will be forgotton after not seen for a lease time of 1 day.
 
 [[options]]
 == OPTIONS
-*-s*, *--state-file* 'statefile'::
-    Use the path 'statefile' as state file to save pairings.
-    The state file will be written all 5 minutes to recover after daemon restarts.
+*-c*, *--config* 'file'::
+    Read the configuration from 'file'.
+
+*-h*, --help*::
+    Show command line arguments and exit.
+
+*-s*, *--state-file* 'file'::
+    Use 'file' as state file to save pairings.
+    The state file will be written all 5 minutes and on exit.
     By default the state file is located at '/var/lib/arpobserver/check.state'.
 
 *--syslog*::
@@ -31,13 +37,41 @@ Pairings will be forgotton after not seen for a lease time of 1 day.
     By default messages are written to *stderr*.
 
 *-v*, *--verbose*::
-    Enable debug messages.
-
-*-h*, --help*::
-    Show command line arguments and exit.
+    Enable verbose output.
 
 *-V*, *--version*::
     Show version information and exit.
+
+
+[[configuration]]
+== CONFIGURATION
+The configuration file consists of key-value pairs, separated by a '=' sign. +
+Lines starting with a '#' are ignored.
+
+*ProtectIP*::
+    IP address to protect. +
+    The first encountered Ethernet/IP pairing matching this IP address will determine the Ethernet address of this protect entry. +
+    See <<PROTECT>> section for more details.
+
+*ProtectMAC*::
+    Ethernet address to protect. +
+    The first encountered Ethernet/IP pairing matching this Ethernet address will determine the Ethernet address of this protect entry. +
+    See <<PROTECT>> section for more details.
+
+*ProtectMACIPPairing*::
+    Ethernet/IP address pair in the format: ethernet-address@ip-address +
+    See <<PROTECT>> section for more details.
+
+*ShmLogName*::
+    Filename of the shared memory log name. +
+    The default is '/arpobserver-shm-log'.
+
+
+[[protect]]
+== PROTECT
+Protected entries are Ethernet/IP address pairings, which must not change.
+Any discovered Ethernet/IP address pairing that does only match partially is reported.
+
 
 == NOTES
 To be able to read the shared memory object of *arpobserverd*(8), *arpobserver-check* should be started as the same user *arpobserverd* switches to.

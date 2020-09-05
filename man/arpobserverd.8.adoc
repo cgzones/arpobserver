@@ -14,27 +14,101 @@ arpobserverd - ethernet/ip address monitoring tool
 
 [[description]]
 == DESCRIPTION
-*arpobserverd* is a similar software to *arpwatch*(8).
-It main purpose is to monitor network and log Ethernet/IP pairings.
+*arpobserverd* is a similar program to *arpwatch*(8).
+It main purpose is to monitor the network and log Ethernet/IP pairings.
 
-To simply try out *arpobserverd* start it without any arguments.
-When started without arguments it will open the first non loopback interface and start logging events to the console without writing anything to disk.
-All discovered Ethernet/IP address pairings will be printed to *stdout*.
-All debug, warning, and error messages will be printed to *stderr*.
+When started without arguments it will open the first non loopback interface and start logging events in verbose mode without writing anything to disk.
+All discovered Ethernet/IP address pairings will be printed to a shared memory object, accessible by other arpobserver programs.
+All debug, warning, and error messages will be printed to *stderr* by default.
 
 
 [[options]]
 == OPTIONS
-*--syslog*::
-    Log program messages to syslog (daemon facility).
+*-A*, *--all-interfaces*::
+    Capture on all available interfaces if no explicit interface is given as trailing command line argument.
+    By default only the first non loopback interface is used.
+
+*-c*, *--config* 'file'::
+    Read the configuration from 'file'.
+
+*-d*, *--daemon*::
+    Become a daemon after start. (not needed in conjunction with systemd)
+
+*-h*, --help*::
+    Show command line arguments and exit.
 
 *-o*, *--output* 'file'::
     Write discovered ethernet/ip address pairings to a specified 'file'.
     See <<OUTPUT>> section for more details.
 
-*--sqlite3* 'sqlite3.db'::
-    Write discovered ethernet/ip address pairings to sqlite3 database in 'sqlite3.db' file.
-    Database file and tables are created during startup if does not exists.
+*-p*, *--pid* 'file'::
+    Write process id to 'file'.
+    The pidfile is deleted when application is terminated.
+    This option is usually used with *-d* argument.
+    When used with *-u* argument, 'file' will be created before changing active user and in most cases *arpobserverd* will not be able to delete 'file' on exit.
+
+*--syslog*::
+    Log program messages to syslog (daemon facility).
+
+*-u*, *--user* _username_::
+    Switch to user _username_ after opening network interfaces.
+    This is the recommend mode of operation.
+
+*-v*, *--verbose*::
+    Enable verbose output.
+
+*-V*, *--version*::
+    Show version information and exit.
+
+
+[[configuration]]
+== CONFIGURATION
+The configuration file consists of key-value pairs, separated by a '=' sign. +
+Lines starting with a '#' are ignored.
+
+*HashSize*::
+    Size of ratelimiting hash table used to store recent Ethernet/Ip address pairings. +
+    The size of hash table should be increased in active networks with many nodes. +
+    Lager hash table speeds up cache lookups at the cost of increased memory usage. +
+    Minimum value is 1, maximum value is 65536. +
+    Default value is 1 (no hash table), all pairings are stored in a linked list.
+
+*IgnoreIP*::
+    Ignore pairings with specified _IP_ address. +
+    Can be specified multiple times.
+
+*IPMode*::
+    Type of IP packets to scan. +
+    _ipv4_: Scan only IPv4 packets. +
+    _ipv6_: Scan only IPv6 packets. +
+    _all_: Scan IPv4 and IPv6 packets. +
+    The default is _all_.
+
+*Promisc*::
+    Whether to set the network device in promisc mode. +
+    _no_: Disable promisc mode on network interfaces. Might limit the functionality of *arpobserverd*. +
+    _yes_: Enable promisc mode on network interfaces. +
+    The default is _yes_.
+
+*RateLimit*::
+    If _num_ is greater than 0, ratelimit duplicate ethernet/ip pairings to 1 every _num_ seconds. +
+    If _num_ is equal 0, ratelimiting of duplicate entries is disabled. +
+    If _num_ is equal -1, duplicate entries are suppressed indefinitely. +
+    The default is 0. +
+    See <<RATELIMITING>> section for more details.
+
+*ShmLogName*::
+    Filename of the shared memory log name. +
+    The default is '/arpobserver-shm-log'.
+
+*ShmLogSize*::
+    Number of log entries in the shared memory log in bytes. +
+    Low values can lead to entries not being processed by client applications. +
+    The default is 1024.
+
+*Sqlite3File*::
+    File to write discovered ethernet/ip address pairings as a sqlite3 database.
+    Database file and tables are created during startup if not existent.
 
     Pairings are written in a table having such schema:
 ----
@@ -48,81 +122,11 @@ All debug, warning, and error messages will be printed to *stderr*.
     );
 ----
 
-*--sqlite3-table* 'table'::
-    Use the table name 'table'.
-    The default is *arpobserver*.
-
-*-L*, *--shm-log-size* _num_::
-    Set the shared memory log size to _num_.
-    The default is 1024.
-
-*-m*, **--shm-log-nam** _name_::
-    Use _name_ as shared memory log name.
-    The default is '/arpobserver-shm-log'.
-
-*-q*, *--quiet*::
-    Suppress printing discovered Ethernet/IP address pairings to *stdout*.
-
-*-v*, *--verbose*::
-    Enable debug messages.
-
-*-4*, *--ipv4-only*::
-    Capture only IPv4 packets.
-
-*-6*, *--ipv6-only*::
-    Capture only IPv6 packets.
-
-*--ignore-ip* _IP_::
-    Ignore pairings with specified _IP_ address.
-    Can be specified multiple times.
-
-*-r*, *--ratelimit* _num_::
-  If _num_ is greater than 0, ratelimit duplicate ethernet/ip pairings to 1 every _num_ seconds.
-  If _num_ is equal 0, ratelimiting of duplicate entries is disabled.
-  If _num_ is equal -1, duplicate entries are suppressed indefinitely.
-  See <<RATELIMITING>> section for more details.
-
-*-H*, *--hashsize* _size_::
-    Size of ratelimiting hash table used to store recent Ethernet/Ip address pairings.
-    Minimum value is 1, maximum value is 65536.
-    Default value is 1 (no hash table), all pairings are stored in a linked list.
-
-    The size of hash table should be increased in active networks with many nodes.
-    Lager hash table speeds up cache lookups at the cost of increased memory usage.
-
-*-d*, *--daemon*::
-    Become a daemon after start.
-    This option implies *-q*.
-
-*-p*, *--pid* 'pidfile'::
-    Write process id to 'pidfile'.
-    The pidfile is deleted when application is terminated.
-    This option is usually used with *-d* argument.
-    When used with *-u* argument, 'pidfle' will be created before changing active user and in most cases *arpobserverd* will not be able to delete 'pidfile' on exit.
-
-*--no-promisc*::
-    Disable promisc mode on network interfaces.
-    Might limit the functionality of *arpobserverd*.
-
-*-u*, *--user* _username_::
-    Switch to user _username_ after opening network interfaces.
-    This is the recommend mode of operation.
-
-*-A*, *--all-interfaces*::
-    Capture on all available interfaces if no explicit interface is given as trailing command line argument.
-    By default only the first non loopback interface is used.
-
-*-h*, --help*::
-    Show command line arguments and exit.
-
-*-V*, *--version*::
-    Show version information and exit.
-
 
 [[output]]
 == OUTPUT
-In output file or *stdout* each line represents one Ethernet/IP address pairing discovery event.
-Event has following format:
+In an output file or debug log output each line represents one Ethernet/IP address pairing discovery event.
+An event has following format:
 ----
     'unix timestamp' 'interface' 'vlan tag' 'mac address' 'ip address' 'packet type'
 ----
@@ -164,6 +168,30 @@ timestamp iface vlan mac ip type
 1339406030 eth0 12 00:c0:ee:5a:89:c7 10.1.32.221 ARP_REQ
 1339406030 eth0 252 00:1c:c0:79:ab:ee 2001:db8:200:2381::657b ND_NS
 ----
+
+
+== NOTES
+You can send a *SIGHUP* signal to *arpobserverd* to force it reopen its output file.
+It may be useful if used in combination with *logrotate*(8).
+
+== EXAMPLES
+Start monitoring first non loopback network interface.
+Output will be send to *stderr*:
+
+    `arpobserverd`
+
+Start monitoring on multiple interfaces:
+
+    `arpobserverd eth0 eth1 eth2`
+
+Start arpobserverd as a daemon, write output to file, enable ratelimiting to 1 event per minute:
+
+    `arpobserverd -d -o /var/lib/arpobserver/output.dat -r 60 eth0`
+
+Start as a daemon, save pid file, send output to syslog, ratelimit to 1 event per hour, suid to nobody, monitor multiple interfaces:
+
+    `arpobserverd -d -p /run/arpobserverd.pid --syslog -r 3600 -u nobody eth0 eth1 eth3`
+
 
 [[ratelimiting]]
 == RATELIMITING
@@ -220,28 +248,6 @@ In this mode arpobserverd acts almost as arpwatch with the exception that ethern
 
 It might look tempting to always use arpobserverd with *--ratelimit=-1* however by doing so you lose the information about when and for what period of time specific IP address was used.
 There will be no difference between temporary IPv6 addressed which was used once and statically configured permanent addresses.
-
-== NOTES
-You can send *SIGHUP* signal to *arpobserverd* to force it reopen output file.
-It may be useful if used in combination with *logrotate*(8).
-
-== EXAMPLES
-Start monitoring first non loopback network interface.
-Output will be send to *stdout*:
-
-    `arpobserverd`
-
-Start monitoring on multiple interfaces:
-
-    `arpobserverd eth0 eth1 eth2`
-
-Start arpobserverd as a daemon, write output to file, enable ratelimiting to 1 event per minute:
-
-    `arpobserverd -d -o /var/lib/arpobserver/output.dat -r 60 eth0`
-
-Start as a daemon, save pid file, send output to syslog, ratelimit to 1 event per hour, suid to nobody, monitor multiple interfaces:
-
-    `arpobserverd -d -p /run/arpobserverd.pid --syslog -r 3600 -u nobody eth0 eth1 eth3`
 
 
 [[see-also]]
