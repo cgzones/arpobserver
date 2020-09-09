@@ -11,3 +11,9 @@ check-local:
 	@echo "Configured without Check support!!"
 	@exit 1
 endif
+
+apply-codespell:
+	codespell -C2 -Lnd,objext --skip .git,config.log,depcomp,aclocal.m4
+
+apply-format:
+	clang-format-11 -i --Werror src/*.c src/*.h tests/*.c
