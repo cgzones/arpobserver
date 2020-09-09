@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cc: [ 'gcc', 'clang-10' ]
+        cc: [ 'gcc', 'clang-11' ]
     env:
       CC: ${{ matrix.cc }}
     steps:
@@ -18,10 +18,10 @@ jobs:
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-10 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
+      run: sudo apt-get install -y clang-11 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
     - name: install asciidoctor and check from Debian sid
       run: |
           wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
@@ -47,10 +47,10 @@ jobs:
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-10 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
+      run: sudo apt-get install -y clang-11 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
     - name: install asciidoctor and check from Debian sid
       run: |
           wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
@@ -60,7 +60,7 @@ jobs:
     - name: autogen
       run: ./autogen.sh
     - name: configure
-      run: ./configure --enable-werror CC=clang-10 CFLAGS="-O2 -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align"
+      run: ./configure --enable-werror CC=clang-11 CFLAGS="-O2 -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align"
     - name: make
       run: make
     - name: make check
@@ -102,11 +102,11 @@ jobs:
       - name: install clang-format
         run: |
             wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-            sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' -y
+            sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main' -y
             sudo apt-get update -q
-            sudo apt-get install -y clang-format-10
+            sudo apt-get install -y clang-format-11
       - name: check format
-        run: clang-format-10 -i --Werror src/*.c src/*.h tests/*.c
+        run: clang-format-11 -i --Werror src/*.c src/*.h tests/*.c
       - name: check changes
         run: git diff --exit-code
 
