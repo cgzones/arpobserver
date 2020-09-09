@@ -72,7 +72,7 @@ struct ip_node *ignorelist_match_ip(const uint8_t *ip_addr, uint8_t addr_len)
 	return NULL;
 }
 
-static uint16_t pkt_hash(const uint8_t *l2_addr, const uint8_t *ip_addr, uint8_t len, uint16_t vlan_tag)
+_access_ro_(1) _access_roc_(2, 3) static uint16_t pkt_hash(const uint8_t *l2_addr, const uint8_t *ip_addr, uint8_t len, uint16_t vlan_tag)
 {
 	uint16_t sum = 0;
 

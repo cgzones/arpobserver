@@ -15,7 +15,7 @@
 
 char *shm_filename = NULL;
 
-static void close_log(struct shm_log **log, size_t mem_size)
+_nonnull_ static void close_log(struct shm_log **log, size_t mem_size)
 {
 	int r;
 
@@ -27,7 +27,7 @@ static void close_log(struct shm_log **log, size_t mem_size)
 		log_error("Error unmapping shared memory: %m");
 }
 
-static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
+_nonnull_ _wur_ static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
 {
 	_cleanup_close_ int fd = -1;
 	const char *path = shm_filename ?: DEFAULT_SHM_LOG_NAME;
@@ -68,9 +68,11 @@ static int open_log(size_t *mem_size, struct shm_log **log, unsigned timeout)
 	return 0;
 }
 
-static int wait_for_active_log(const struct shm_log *log, const volatile sig_atomic_t *stop_loop)
+_wur_ static int wait_for_active_log(const struct shm_log *log, const volatile sig_atomic_t *stop_loop)
 {
 	int timeout = (2 * TIMEOUT_SEC + 1) / WAIT_INTERVAL_SEC;
+
+	assert(log);
 
 	while ((log->magic != MAGIC || !log->active) && timeout-- > 0 && (stop_loop == NULL || !*stop_loop))
 		sleep(WAIT_INTERVAL_SEC);

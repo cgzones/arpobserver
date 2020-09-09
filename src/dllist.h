@@ -30,9 +30,9 @@ DEFINE_TRIVIAL_CLEANUP_FUNC(struct dllist_head *, dllist_free);
 #define _cleanup_dllist_ _cleanup_(dllist_freep)
 
 
-int dllist_push_front(struct dllist_head *h, void *data) _wur_;
-int dllist_push_back(struct dllist_head *h, void *data) _wur_;
+int dllist_push_front(struct dllist_head *h, void *data) _nonnull_ _wur_;
+int dllist_push_back(struct dllist_head *h, void *data) _nonnull_ _wur_;
 
-struct dllist_entry *dllist_delete_entry(struct dllist_head *h, struct dllist_entry *e);
+struct dllist_entry *dllist_delete_entry(struct dllist_head *h, struct dllist_entry *e) _nonnull_;
 
-void dllist_promote_entry(struct dllist_head *h, struct dllist_entry *e);
+void dllist_promote_entry(struct dllist_head *h, struct dllist_entry *e) _nonnull_;

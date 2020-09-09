@@ -40,7 +40,7 @@ int lock_state_file(const char *path)
 	return TAKE_FD(fd);
 }
 
-static int parse_state_line(char *line, size_t len, struct dllist_head *state)
+_access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len, struct dllist_head *state)
 {
 	time_t timestamp;
 	char interface[IFNAMSIZ];

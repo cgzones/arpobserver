@@ -94,7 +94,8 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		if (r < 0)
 			snprintf(protected_ip_str, sizeof(protected_ip_str), CONVERSION_FAILURE_STR);
 
-		log_warn("chk: node (IF = %s, MAC = %s, IP = %s) conflicts with protected entry: MAC = %s, IP = %s", e->interface, mac_str, ip_str, protected_mac_str, protected_ip_str);
+		log_warn("chk: node (IF = %s, MAC = %s, IP = %s) conflicts with protected entry: MAC = %s, IP = %s", e->interface, mac_str,
+			 ip_str, protected_mac_str, protected_ip_str);
 		return;
 	}
 

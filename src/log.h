@@ -3,8 +3,10 @@
 #include <errno.h>
 #include <syslog.h>
 
+#include "macro.h"
 
-void log_open(const char *ident);
+
+void log_open(const char *ident) _nonnull_;
 
 void log_max_priority(int priority);
 

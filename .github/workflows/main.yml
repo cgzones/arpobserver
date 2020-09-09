@@ -99,11 +99,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: check-format
+      - name: install clang-format
         run: |
-          find src/ \( -iname '*.h' -o -iname '*.c' \) -execdir clang-format -i {} \;
-          find tests/ \( -iname '*.h' -o -iname '*.c' \) -execdir clang-format -i {} \;
-          git diff --exit-code
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+            sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' -y
+            sudo apt-get update -q
+            sudo apt-get install -y clang-format-10
+      - name: check format
+        run: clang-format-10 -i --Werror src/*.c src/*.h tests/*.c
+      - name: check changes
+      - run: git diff --exit-code
 
 #  cppcheck:
 #    name: Cppcheck

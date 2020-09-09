@@ -8,9 +8,13 @@
 #include "cleanup.h"
 #include "log.h"
 
-static char *trim_right(char *str)
+_nonnull_ static char *trim_right(char *str)
 {
-	size_t len = strlen(str);
+	size_t len;
+
+	assert(str);
+
+	len = strlen(str);
 	while (len > 0 && isspace((unsigned char)str[len - 1])) {
 		str[len - 1] = '\0';
 		--len;
@@ -27,6 +31,7 @@ int parse_config_file(const char *path, config_accept_func func)
 	ssize_t read;
 
 	assert(path);
+	assert(func);
 
 	stream = fopen(path, "re");
 	if (!stream)

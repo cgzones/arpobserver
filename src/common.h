@@ -67,16 +67,16 @@ struct pkt {
 
 #define CONVERSION_FAILURE_STR "FAILED_CONV"
 
-void convert_mac_addr_to_str(const uint8_t addr[], char *str);
+void convert_mac_addr_to_str(const uint8_t addr[], char *str) _nonnull_;
 
-int convert_mac_str_to_addr(const char *str, uint8_t addr[]) _wur_;
+int convert_mac_str_to_addr(const char *str, uint8_t addr[]) _nonnull_ _wur_;
 
-int convert_ip4_addr_to_str(const void *addr, char *str) _wur_;
+int convert_ip4_addr_to_str(const void *addr, char *str) _nonnull_ _wur_;
 
-int convert_ip4_str_to_addr(const char *str, void *addr) _wur_;
+int convert_ip4_str_to_addr(const char *str, void *addr) _nonnull_ _wur_;
 
-int convert_ip6_addr_to_str(const void *addr, char *str) _wur_;
+int convert_ip6_addr_to_str(const void *addr, char *str) _nonnull_ _wur_;
 
-int convert_ip6_str_to_addr(const char *str, void *addr) _wur_;
+int convert_ip6_str_to_addr(const char *str, void *addr) _nonnull_ _wur_;
 
-int convert_ip_addr_to_str(const void *addr, int addr_len, char *str) _wur_;
+int convert_ip_addr_to_str(const void *addr, int addr_len, char *str) _access_roc_(1, 2) _nonnull_ _wur_;

@@ -552,12 +552,17 @@ int main(int argc, char *argv[])
 	const char *config_path = DEFAULT_CONFIG_PATH;
 
 	const struct option long_options[] = {
-		{"all-interfaces", no_argument, NULL, 'A'}, {"config", required_argument, NULL, 'c'},
-		{"daemon", no_argument, NULL, 'd'},         {"help", no_argument, NULL, 'h'},
-		{"output", required_argument, NULL, 'o'},   {"pid", required_argument, NULL, 'p'},
+		{"all-interfaces", no_argument, NULL, 'A'},
+		{"config", required_argument, NULL, 'c'},
+		{"daemon", no_argument, NULL, 'd'},
+		{"help", no_argument, NULL, 'h'},
+		{"output", required_argument, NULL, 'o'},
+		{"pid", required_argument, NULL, 'p'},
 		{"syslog", no_argument, NULL, ARG_SYSLOG},
-		{"user", required_argument, NULL, 'u'},     {"verbose", no_argument, NULL, 'v'},
-		{"version", no_argument, NULL, 'V'},        {0, 0, 0, 0},
+		{"user", required_argument, NULL, 'u'},
+		{"verbose", no_argument, NULL, 'v'},
+		{"version", no_argument, NULL, 'V'},
+		{0, 0, 0, 0},
 	};
 
 	/* Default configuration */

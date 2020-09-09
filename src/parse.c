@@ -5,7 +5,7 @@
 #include "arpobserver.h"
 #include "log.h"
 
-static int parse_arp(struct pkt *p)
+_nonnull_ _wur_ static int parse_arp(struct pkt *p)
 {
 	const struct ether_arp *arp;
 
@@ -37,7 +37,7 @@ static int parse_arp(struct pkt *p)
 	return 0;
 }
 
-static int parse_nd(struct pkt *p)
+_nonnull_ _wur_ static int parse_nd(struct pkt *p)
 {
 	assert(p);
 
@@ -120,7 +120,7 @@ static int parse_nd(struct pkt *p)
 	return 0;
 }
 
-static int parse_ipv6(struct pkt *p)
+_nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 {
 	const struct ip6_hdr *ip6;
 	const struct ip6_ext *ip6e;

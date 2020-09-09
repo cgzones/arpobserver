@@ -16,8 +16,7 @@ DEFINE_TRIVIAL_CLEANUP_FUNC(struct protect_entry *, free_protect_entry);
 
 static struct dllist_head *protect_list = NULL;
 
-
-static int init_protect_list(void)
+_wur_ static int init_protect_list(void)
 {
 	if (protect_list)
 		return 0;
@@ -30,6 +29,9 @@ static int init_protect_list(void)
 size_t protect_list_size()
 {
 	size_t count = 0;
+
+	assert(protect_list);
+
 	for (const struct dllist_entry *dentry = protect_list->first; dentry; dentry = dentry->next) {
 		++count;
 	}
@@ -43,8 +45,11 @@ void free_protect_list()
 	protect_list = NULL;
 }
 
-static bool ip4_already_set(const uint8_t *ip4_addr)
+_nonnull_ _wur_ static bool ip4_already_set(const uint8_t *ip4_addr)
 {
+	assert(protect_list);
+	assert(ip4_addr);
+
 	for (const struct dllist_entry *dentry = protect_list->first; dentry; dentry = dentry->next) {
 		const struct protect_entry *pentry = dentry->data;
 
@@ -58,8 +63,11 @@ static bool ip4_already_set(const uint8_t *ip4_addr)
 	return false;
 }
 
-static bool ip6_already_set(const uint8_t *ip6_addr)
+_nonnull_ _wur_ static bool ip6_already_set(const uint8_t *ip6_addr)
 {
+	assert(protect_list);
+	assert(ip6_addr);
+
 	for (const struct dllist_entry *dentry = protect_list->first; dentry; dentry = dentry->next) {
 		const struct protect_entry *pentry = dentry->data;
 
@@ -73,8 +81,11 @@ static bool ip6_already_set(const uint8_t *ip6_addr)
 	return false;
 }
 
-static struct protect_entry *find_mac(const uint8_t *mac_addr)
+_nonnull_ _wur_ static struct protect_entry *find_mac(const uint8_t *mac_addr)
 {
+	assert(protect_list);
+	assert(mac_addr);
+
 	for (const struct dllist_entry *dentry = protect_list->first; dentry; dentry = dentry->next) {
 		struct protect_entry *pentry = dentry->data;
 

@@ -1,7 +1,7 @@
+#include "../src/dllist.h"
+
 #include <check.h>
 #include <time.h>
-
-#include "../src/dllist.h"
 
 
 START_TEST(test_minimal)
@@ -94,7 +94,7 @@ START_TEST(test_random)
 			max_size = h->size;
 	}
 
-	printf("avg size: %zu   end size: %zu   max size: %zu\n", sum_size/rounds, h->size, max_size);
+	printf("avg size: %zu   end size: %zu   max size: %zu\n", sum_size / rounds, h->size, max_size);
 
 	dllist_free(h);
 }
