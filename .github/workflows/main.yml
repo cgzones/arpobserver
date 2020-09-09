@@ -108,7 +108,7 @@ jobs:
       - name: check format
         run: clang-format-10 -i --Werror src/*.c src/*.h tests/*.c
       - name: check changes
-      - run: git diff --exit-code
+        run: git diff --exit-code
 
 #  cppcheck:
 #    name: Cppcheck
