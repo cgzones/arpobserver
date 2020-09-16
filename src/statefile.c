@@ -13,6 +13,7 @@
 #include "log.h"
 #include "macro.h"
 #include "shm.h"
+#include "util.h"
 
 int lock_state_file(const char *path)
 {
@@ -77,8 +78,7 @@ _access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len,
 		return 0;
 	}
 
-	memcpy(interface, line_p, (size_t)(comma - line_p));
-	interface[comma - line_p] = '\0';
+	safe_strncpy(interface, line_p, (size_t)(comma - line_p));
 
 	line_p = comma + 1;
 
@@ -88,8 +88,7 @@ _access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len,
 		return 0;
 	}
 
-	memcpy(mac_str, line_p, (size_t)(comma - line_p));
-	mac_str[comma - line_p] = '\0';
+	safe_strncpy(mac_str, line_p, (size_t)(comma - line_p));
 
 	line_p = comma + 1;
 
@@ -104,15 +103,14 @@ _access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len,
 		return 0;
 	}
 
-	memcpy(ip_str, line_p, remaining_len);
-	ip_str[remaining_len] = '\0';
+	safe_strncpy(ip_str, line_p, remaining_len);
 
 	new_data = calloc(1, sizeof(struct shm_log_entry));
 	if (!new_data)
 		return log_oom();
 
 	new_data->timestamp = timestamp;
-	memcpy(new_data->interface, interface, sizeof(new_data->interface));
+	safe_strncpy(new_data->interface, interface, sizeof(new_data->interface));
 
 	if (convert_mac_str_to_addr(mac_str, new_data->mac_address) < 0) {
 		log_warn("%s: Cannot convert MAC address '%s' to binary form: %m", __func__, mac_str);

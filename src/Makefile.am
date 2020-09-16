@@ -10,7 +10,9 @@ common_sources = arpobserver.h				\
 		 log.c					\
 		 log.h					\
 		 macro.h				\
-		 shm.h
+		 shm.h					\
+		 util.c					\
+		 util.h
 
 arpobserverd_SOURCES = arpobserverd.c			\
 		       base64.c				\

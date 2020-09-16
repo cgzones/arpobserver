@@ -21,6 +21,7 @@
 #include "shm.h"
 #include "shm_client.h"
 #include "statefile.h"
+#include "util.h"
 
 #define CHECK_ARGV0         "arpobserver-checkd"
 #define DEFAULT_CONFIG_PATH SYSCONFDIR "/" PACKAGE "/check.conf"
@@ -166,7 +167,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			if (0 != strcmp(data->interface, e->interface)) {
 				log_notice("chk: interface changed for MAC address %s / IP address %s : %s -> %s", mac_str, ip_str,
 					   data->interface, e->interface);
-				strncpy(data->interface, e->interface, IFNAMSIZ);
+				safe_strncpy(data->interface, e->interface, IFNAMSIZ);
 			}
 
 			data->timestamp = e->timestamp;
