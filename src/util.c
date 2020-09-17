@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-char *safe_strncpy(char *dest, const char *src, size_t size)
+char *safe_strncpy(char *restrict dest, const char *restrict src, size_t size)
 {
 	assert(dest);
 	assert(size > 0);
