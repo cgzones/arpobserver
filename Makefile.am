@@ -13,7 +13,7 @@ check-local:
 endif
 
 apply-codespell:
-	codespell -C2 -Lnd,objext --skip .git,config.log,depcomp,aclocal.m4
+	codespell -C2 -Lnd,objext --skip .git,config.log,depcomp,aclocal.m4,arpobserverd.8,arpobserver-checkd.8 -q 2
 
 apply-format:
 	clang-format-11 -i --Werror src/*.c src/*.h tests/*.c
