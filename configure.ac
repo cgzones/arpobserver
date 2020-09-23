@@ -77,6 +77,7 @@ AC_FUNC_FORK
 # Warning flags
 AM_CFLAGS="\
  -Wall\
+ -Wcast-qual\
  -Wconversion\
  -Wdeclaration-after-statement\
  -Wextra\
