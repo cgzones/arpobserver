@@ -41,7 +41,7 @@ static const char *const def_filter = "ip6 and not tcp and not udp and not esp a
 
 static int drop_root(const char *uname)
 {
-	struct passwd *pw;
+	const struct passwd *pw;
 
 	assert(uname);
 
@@ -160,7 +160,7 @@ static int add_iface(const char *iface)
 		return log_errno_error(EINVAL, "%s: hash size (%d) must be >= 1 and <= 65536", __FUNCTION__, global_cfg.hashsize);
 
 	if (global_cfg.ratelimit) {
-		ifc->cache = calloc((unsigned)global_cfg.hashsize, sizeof(struct mcache_node));
+		ifc->cache = calloc(global_cfg.hashsize, sizeof(struct mcache_node));
 		if (!ifc->cache)
 			return log_oom();
 	}
