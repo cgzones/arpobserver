@@ -30,11 +30,11 @@ size_t protect_list_size()
 {
 	size_t count = 0;
 
-	assert(protect_list);
+	if (!protect_list)
+		return 0;
 
-	for (const struct dllist_entry *dentry = protect_list->first; dentry; dentry = dentry->next) {
+	for (const struct dllist_entry *dentry = protect_list->first; dentry; dentry = dentry->next)
 		++count;
-	}
 
 	return count;
 }
