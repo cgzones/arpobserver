@@ -90,7 +90,7 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y codespell
       - name: run codespell
-        run: codespell -C2 -Lnd,objext --skip .git
+        run: codespell -C2 -Lnd,objext,ether --skip .git
 
   format_check:
     name: Format Check
