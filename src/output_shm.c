@@ -11,6 +11,7 @@
 #include "arpobserver.h"
 #include "log.h"
 #include "shm.h"
+#include "util.h"
 
 int output_shm_init()
 {
@@ -81,7 +82,7 @@ int output_shm_save(const struct pkt *p, const char *mac_str, const char *ip_str
 	e = &log->data[idx];
 
 	e->timestamp = p->pcap_header->ts.tv_sec;
-	memcpy(e->interface, p->ifc->name, sizeof(e->interface));
+	safe_strncpy(e->interface, p->ifc->name, sizeof(e->interface));
 	memcpy(e->ip_address, p->ip_addr, p->ip_len);
 	memcpy(e->mac_address, p->l2_addr, sizeof(e->mac_address));
 	e->ip_len = p->ip_len;
