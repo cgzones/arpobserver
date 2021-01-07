@@ -78,7 +78,7 @@ _access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len,
 		return 0;
 	}
 
-	safe_strncpy(interface, line_p, (size_t)(comma - line_p));
+	safe_strncpy(interface, line_p, MIN((size_t)(comma - line_p + 1), sizeof(interface)));
 
 	line_p = comma + 1;
 
@@ -88,7 +88,7 @@ _access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len,
 		return 0;
 	}
 
-	safe_strncpy(mac_str, line_p, (size_t)(comma - line_p));
+	safe_strncpy(mac_str, line_p, MIN((size_t)(comma - line_p + 1), sizeof(mac_str)));
 
 	line_p = comma + 1;
 
@@ -103,7 +103,7 @@ _access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len,
 		return 0;
 	}
 
-	safe_strncpy(ip_str, line_p, remaining_len);
+	safe_strncpy(ip_str, line_p, MIN(remaining_len + 1, sizeof(ip_str)));
 
 	new_data = calloc(1, sizeof(struct shm_log_entry));
 	if (!new_data)

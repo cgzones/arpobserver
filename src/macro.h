@@ -3,6 +3,7 @@
 #define STRINGIFY(s) #s
 #define STR(s)       STRINGIFY(s)
 
+#define MIN(a,b)     (((a) < (b)) ? (a) : (b))
 
 #if defined(__GNUC__) && __GNUC__ >= 10
 
