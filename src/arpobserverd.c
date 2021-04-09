@@ -532,6 +532,7 @@ static void usage(void)
 	       "  -A, --all-interfaces       Capture on all available interfaces by default.\n"
 	       "  -c, --config=FILE          Read the configuration from FILE (default: %s).\n"
 	       "  -d, --daemon               Start as a daemon.\n"
+	       "  -L, --list-interfaces      List all available interfaces and exit.\n"
 	       "  -p, --pid=FILE             Write process id to FILE.\n"
 	       "      --syslog               Log to syslog instead of stderr.\n"
 	       "  -u, --user=USER            Switch to USER after opening network interfaces.\n"
@@ -543,6 +544,35 @@ static void usage(void)
 	       DEFAULT_CONFIG_PATH);
 }
 
+static int list_interfaces(void)
+{
+	pcap_if_t *alldevsp;
+	char errbuf[PCAP_ERRBUF_SIZE];
+	int r;
+
+	r = pcap_findalldevs(&alldevsp, errbuf);
+	if (r != 0) {
+		fprintf(stderr, "Error while getting list of interface devices: %s", errbuf);
+		return EXIT_FAILURE;
+	}
+
+	if (alldevsp) {
+		unsigned i = 1;
+		for (const pcap_if_t *devsp = alldevsp; devsp; devsp = devsp->next) {
+			if (devsp->flags & PCAP_IF_LOOPBACK)
+				continue;
+
+			printf(" %2u: %32s - %s\n", i++, devsp->name, devsp->description ?: "");
+		}
+	} else {
+		printf("No interfaces available.\n");
+	}
+
+	pcap_freealldevs(alldevsp);
+
+	return EXIT_SUCCESS;
+}
+
 #define ARG_SYSLOG 128
 
 int main(int argc, char *argv[])
@@ -552,16 +582,17 @@ int main(int argc, char *argv[])
 	const char *config_path = DEFAULT_CONFIG_PATH;
 
 	const struct option long_options[] = {
-		{"all-interfaces", no_argument, NULL, 'A'},
-		{"config", required_argument, NULL, 'c'},
-		{"daemon", no_argument, NULL, 'd'},
-		{"help", no_argument, NULL, 'h'},
-		{"output", required_argument, NULL, 'o'},
-		{"pid", required_argument, NULL, 'p'},
-		{"syslog", no_argument, NULL, ARG_SYSLOG},
-		{"user", required_argument, NULL, 'u'},
-		{"verbose", no_argument, NULL, 'v'},
-		{"version", no_argument, NULL, 'V'},
+		{"all-interfaces",  no_argument,       NULL, 'A'},
+		{"config",          required_argument, NULL, 'c'},
+		{"daemon",          no_argument,       NULL, 'd'},
+		{"help",            no_argument,       NULL, 'h'},
+		{"list-interfaces", no_argument,       NULL, 'L'},
+		{"output",          required_argument, NULL, 'o'},
+		{"pid",             required_argument, NULL, 'p'},
+		{"syslog",          no_argument,       NULL, ARG_SYSLOG},
+		{"user",            required_argument, NULL, 'u'},
+		{"verbose",         no_argument,       NULL, 'v'},
+		{"version",         no_argument,       NULL, 'V'},
 		{0, 0, 0, 0},
 	};
 
@@ -586,7 +617,7 @@ int main(int argc, char *argv[])
 	for (;;) {
 		int option_index = 0;
 
-		int c = getopt_long(argc, argv, "Ac:dho:p:u:vV", long_options, &option_index);
+		int c = getopt_long(argc, argv, "Ac:dhLo:p:u:vV", long_options, &option_index);
 
 		if (c == -1)
 			break;
@@ -610,6 +641,9 @@ int main(int argc, char *argv[])
 		case 'h':
 			usage();
 			exit(EXIT_SUCCESS);
+
+		case 'L':
+			exit(list_interfaces());
 
 		case 'o':
 			global_cfg.data_file = optarg;
