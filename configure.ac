@@ -81,6 +81,9 @@ AM_CFLAGS="\
  -Wconversion\
  -Wdeclaration-after-statement\
  -Wextra\
+ -Wfloat-equal\
+ -Wformat=2\
+ -Winit-self\
  -Wmissing-format-attribute\
  -Wmissing-noreturn\
  -Wmissing-prototypes\
