@@ -112,7 +112,7 @@ static void pcap_callback(const struct iface_config *ifc, const struct pcap_pkth
 
 static unsigned timeout_cycles_without_packets = 0;
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 static void read_cb(evutil_socket_t fd, short events, void *arg)
 #else
 static void read_cb(int fd, short events, void *arg)
@@ -207,7 +207,7 @@ static int add_iface(const char *iface)
 	rc = pcap_fileno(ifc->pcap_handle);
 	assert(rc != -1);
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	ifc->event = event_new(global_cfg.eb, rc, EV_READ | EV_PERSIST, read_cb, ifc);
 	if (!ifc->event) {
 		log_error("%s: event_new(...)", __FUNCTION__);
@@ -232,7 +232,7 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 {
 	struct iface_config *next = ifc->next;
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	event_free(ifc->event);
 #endif
 	pcap_freecode(&ifc->pcap_filter);
@@ -254,7 +254,7 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 	return next;
 }
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 static void reload_cb(evutil_socket_t fd, short events, void *arg)
 #else
 static void reload_cb(int fd, short events, void *arg)
@@ -268,7 +268,7 @@ static void reload_cb(int fd, short events, void *arg)
 	(void)!output_shm_reload();
 }
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 static void stop_cb(evutil_socket_t fd, short events, void *arg)
 #else
 static void stop_cb(int fd, short events, void *arg)
@@ -277,14 +277,14 @@ static void stop_cb(int fd, short events, void *arg)
 	log_debug("Received signal (%d), %s", fd, strsignal(fd));
 	log_debug("Stopping output");
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	event_base_loopbreak(global_cfg.eb);
 #else
 	event_loopbreak();
 #endif
 }
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 static void timeout_cb(evutil_socket_t fd, short events, void *arg)
 #else
 static void timeout_cb(int fd, short events, void *arg)
@@ -314,7 +314,7 @@ static int libevent_init(void)
 	struct timeval timeout = {.tv_sec = TIMEOUT_SEC, .tv_usec = 0};   // non-const for libevent 1.4
 
 	/* init */
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	global_cfg.eb = event_base_new();
 
 	if (!global_cfg.eb) {
@@ -326,7 +326,7 @@ static int libevent_init(void)
 #endif
 
 	/* SIGINT */
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	global_cfg.sigint_ev = event_new(global_cfg.eb, SIGINT, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
 	event_add(global_cfg.sigint_ev, NULL);
 #else
@@ -335,7 +335,7 @@ static int libevent_init(void)
 #endif
 
 	/* SIGTERM */
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	global_cfg.sigterm_ev = event_new(global_cfg.eb, SIGTERM, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
 	event_add(global_cfg.sigterm_ev, NULL);
 #else
@@ -344,7 +344,7 @@ static int libevent_init(void)
 #endif
 
 	/* SIGHUP */
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	global_cfg.sighup_ev = event_new(global_cfg.eb, SIGHUP, EV_SIGNAL | EV_PERSIST, reload_cb, NULL);
 	event_add(global_cfg.sighup_ev, NULL);
 #else
@@ -353,7 +353,7 @@ static int libevent_init(void)
 #endif
 
 	/* timeout */
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	global_cfg.timeout_ev = event_new(global_cfg.eb, -1, EV_PERSIST, timeout_cb, NULL);
 	event_add(global_cfg.timeout_ev, &timeout);
 #else
@@ -366,7 +366,7 @@ static int libevent_init(void)
 
 static void libevent_close(void)
 {
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	event_free(global_cfg.sigint_ev);
 	event_free(global_cfg.sigterm_ev);
 	event_free(global_cfg.sighup_ev);
@@ -493,7 +493,7 @@ static int config_accept(const char *key, const char *value)
 		return 0;
 	}
 
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 	if (0 == strcmp("Sqlite3File", key)) {
 		if (value[0] == '\0')
 			return 0;
@@ -579,7 +579,7 @@ int main(int argc, char *argv[])
 	global_cfg.shm_data.filename = NULL;
 	global_cfg.v4_flag = false;
 	global_cfg.v6_flag = false;
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 	global_cfg.sqlite_tablename = NULL;
 #endif
 
@@ -731,7 +731,7 @@ int main(int argc, char *argv[])
 #endif
 
 	/* main loop */
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	event_base_dispatch(global_cfg.eb);
 #else
 	event_dispatch();

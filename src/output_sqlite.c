@@ -6,7 +6,7 @@
 #include "arpobserver.h"
 #include "log.h"
 
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 static const char sqlite_create_template[] = "\
 CREATE TABLE IF NOT EXISTS %s(\
 timestamp UNSIGNED BIG INT, \
@@ -25,7 +25,7 @@ static sqlite3_stmt *sqlite_stmt;
 
 int output_sqlite_init()
 {
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 	const char *tablename = global_cfg.sqlite_tablename ?: PACKAGE;
 	int rc;
 	char create_query[sizeof(sqlite_create_template) + 64];
@@ -74,7 +74,7 @@ int output_sqlite_reload()
 
 int output_sqlite_save(const struct pkt *p, const char *mac_str, const char *ip_str)
 {
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 	int rc;
 
 	assert(p);
@@ -123,7 +123,7 @@ int output_sqlite_save(const struct pkt *p, const char *mac_str, const char *ip_
 
 void output_sqlite_close()
 {
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 	if (sqlite_conn) {
 		sqlite3_finalize(sqlite_stmt);
 		sqlite3_close(sqlite_conn);

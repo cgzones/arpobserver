@@ -7,7 +7,7 @@
 #include "config.h"
 #include "mcache.h"
 
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 #	include <sqlite3.h>
 #endif
 
@@ -22,7 +22,7 @@
 
 struct iface_config {
 	char *name;
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	struct event *event;
 #else
 	struct event event;
@@ -74,14 +74,14 @@ struct arpobserver_config {
 		uint64_t size;
 	} shm_data;
 
-#if HAVE_LIBSQLITE3
+#ifdef HAVE_LIBSQLITE3
 	char *sqlite_filename;
 	char *sqlite_tablename;
 #endif
 
 	struct event_base *eb;
 
-#if HAVE_LIBEVENT2
+#ifdef HAVE_LIBEVENT2
 	struct event *sigint_ev;
 	struct event *sigterm_ev;
 	struct event *sighup_ev;
