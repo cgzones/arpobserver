@@ -37,10 +37,8 @@ int output_flatfile_save(const struct pkt *p, const char *mac_str, const char *i
 	assert(mac_str);
 	assert(ip_str);
 
-	if (!global_cfg.data_file) {
-		log_debug("No flatfile specified. Skipping save...");
+	if (!global_cfg.data_file)
 		return 0;
-	}
 
 	assert(data_fd);
 

@@ -119,9 +119,9 @@ void save_pairing(const struct pkt *p)
 		return;
 	}
 
-	(void)!output_shm_save(p, mac_str, ip_str);
+	log_debug("saving %lu %s %u %s %s %s", tstamp, p->ifc->name, p->vlan_tag, mac_str, ip_str, pkt_origin_str[p->origin]);
 
-	log_debug("%lu %s %u %s %s %s\n", tstamp, p->ifc->name, p->vlan_tag, mac_str, ip_str, pkt_origin_str[p->origin]);
+	(void)!output_shm_save(p, mac_str, ip_str);
 
 	(void)!output_flatfile_save(p, mac_str, ip_str);
 

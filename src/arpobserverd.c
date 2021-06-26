@@ -155,7 +155,7 @@ static int add_iface(const char *iface)
 		return log_oom();
 
 	if (global_cfg.hashsize < 1 || global_cfg.hashsize > 65536)
-		return log_errno_error(EINVAL, "%s: hash size (%d) must be >= 1 and <= 65536", __func__, global_cfg.hashsize);
+		return log_errno_error(EINVAL, "Hash size (%d) must be >= 1 and <= 65536", global_cfg.hashsize);
 
 	if (global_cfg.ratelimit) {
 		ifc->cache = calloc(global_cfg.hashsize, sizeof(struct mcache_node));
