@@ -227,7 +227,7 @@ int parse_packet(struct pkt *p)
 	case ETHERTYPE_IPV6:
 		return parse_ipv6(p);
 	default:
-		log_info("%s: Unknown Ethernet packet type: %u", p->ifc->name, ether_type);
+		log_notice("%s: Unknown Ethernet packet type: %u", p->ifc->name, ether_type);
 		return -1;
 	}
 }

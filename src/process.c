@@ -71,7 +71,7 @@ void process_ns(struct pkt *p)
 		return;
 	}
 
-	log_debug("%s: Ignoring unknown IPv6 NS packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
+	log_notice("%s: Ignoring unknown IPv6 NS packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
 }
 
 void process_na(struct pkt *p)
@@ -88,7 +88,7 @@ void process_na(struct pkt *p)
 		return;
 	}
 
-	log_debug("%s: Ignoring unknown IPv6 NA packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
+	log_notice("%s: Ignoring unknown IPv6 NA packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
 }
 
 void process_ra(struct pkt *p)
@@ -105,7 +105,7 @@ void process_ra(struct pkt *p)
 		return;
 	}
 
-	log_debug("%s: Ignoring unknown IPv6 RA packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
+	log_notice("%s: Ignoring unknown IPv6 RA packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
 }
 
 void process_rs(struct pkt *p)
@@ -122,5 +122,5 @@ void process_rs(struct pkt *p)
 		return;
 	}
 
-	log_debug("%s: Ignoring unknown IPv6 RS packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
+	log_notice("%s: Ignoring unknown IPv6 RS packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
 }
