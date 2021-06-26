@@ -164,7 +164,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		if (ip_match && mac_match) {
 			log_debug("chk: complete cache entry match");
 
-			if (0 != strcmp(data->interface, e->interface)) {
+			if (!string_eq(data->interface, e->interface)) {
 				log_notice("chk: interface changed for MAC address %s / IP address %s : %s -> %s", mac_str, ip_str,
 					   data->interface, e->interface);
 				safe_strncpy(data->interface, e->interface, IFNAMSIZ);
@@ -273,16 +273,16 @@ static void wrapper_free(void *p)
 
 static int config_accept(const char *key, const char *value)
 {
-	if (0 == strcmp("ProtectIP", key))
+	if (string_eq("ProtectIP", key))
 		return protect_ip(value);
 
-	if (0 == strcmp("ProtectMAC", key))
+	if (string_eq("ProtectMAC", key))
 		return protect_mac(value);
 
-	if (0 == strcmp("ProtectMACIPPairing", key))
+	if (string_eq("ProtectMACIPPairing", key))
 		return protect_mac_ip_pairing(value);
 
-	if (0 == strcmp("ShmLogName", key)) {
+	if (string_eq("ShmLogName", key)) {
 		if (value[0] != '/' || value[1] == '\0')
 			return log_error("Invalid value '%s' for option %s.", value, key);
 		free(shm_filename);

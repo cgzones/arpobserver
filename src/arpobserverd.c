@@ -26,6 +26,7 @@
 #include "process.h"
 #include "shm.h"
 #include "storage.h"
+#include "util.h"
 
 #define MAIN_ARGV0           "arpobserverd"
 #define DEFAULT_CONFIG_PATH  SYSCONFDIR "/" PACKAGE "/main.conf"
@@ -403,7 +404,7 @@ static void del_pid(void)
 
 static int config_accept(const char *key, const char *value)
 {
-	if (0 == strcmp("HashSize", key)) {
+	if (string_eq("HashSize", key)) {
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
 		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= 65536)
@@ -413,29 +414,29 @@ static int config_accept(const char *key, const char *value)
 		return 0;
 	}
 
-	if (0 == strcmp("IgnoreIP", key)) {
+	if (string_eq("IgnoreIP", key)) {
 		if (value[0] == '\0')
 			return 0;
 
 		return ignorelist_add_ip(optarg);
 	}
 
-	if (0 == strcmp("IPMode", key)) {
-		if (0 == strcmp("all", value)) {
+	if (string_eq("IPMode", key)) {
+		if (string_eq("all", value)) {
 			global_cfg.v4_flag = false;
 			global_cfg.v6_flag = false;
 
 			return 0;
 		}
 
-		if (0 == strcmp("ipv4", value)) {
+		if (string_eq("ipv4", value)) {
 			global_cfg.v4_flag = true;
 			global_cfg.v6_flag = false;
 
 			return 0;
 		}
 
-		if (0 == strcmp("ipv6", value)) {
+		if (string_eq("ipv6", value)) {
 			global_cfg.v4_flag = false;
 			global_cfg.v6_flag = true;
 
@@ -445,14 +446,14 @@ static int config_accept(const char *key, const char *value)
 		return log_error("Invalid value '%s' for option %s.", value, key);
 	}
 
-	if (0 == strcmp("Promisc", key)) {
-		if (0 == strcmp("yes", value)) {
+	if (string_eq("Promisc", key)) {
+		if (string_eq("yes", value)) {
 			global_cfg.promisc_flag = 1;
 
 			return 0;
 		}
 
-		if (0 == strcmp("no", value)) {
+		if (string_eq("no", value)) {
 			global_cfg.promisc_flag = 0;
 
 			return 0;
@@ -461,7 +462,7 @@ static int config_accept(const char *key, const char *value)
 		return log_error("Invalid value '%s' for option %s.", value, key);
 	}
 
-	if (0 == strcmp("RateLimit", key)) {
+	if (string_eq("RateLimit", key)) {
 		char *endptr;
 		long int res = strtol(value, &endptr, 10);
 		if (res == LONG_MAX || *endptr != '\0' || res < -1 || res >= INT_MAX)
@@ -472,7 +473,7 @@ static int config_accept(const char *key, const char *value)
 	}
 
 
-	if (0 == strcmp("ShmLogName", key)) {
+	if (string_eq("ShmLogName", key)) {
 		if (value[0] != '/' || value[1] == '\0')
 			return log_error("Invalid value '%s' for option %s.", value, key);
 		free(global_cfg.shm_data.filename);
@@ -483,7 +484,7 @@ static int config_accept(const char *key, const char *value)
 		return 0;
 	}
 
-	if (0 == strcmp("ShmLogSize", key)) {
+	if (string_eq("ShmLogSize", key)) {
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
 		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= INT_MAX)
@@ -494,7 +495,7 @@ static int config_accept(const char *key, const char *value)
 	}
 
 #ifdef HAVE_LIBSQLITE3
-	if (0 == strcmp("Sqlite3File", key)) {
+	if (string_eq("Sqlite3File", key)) {
 		if (value[0] == '\0')
 			return 0;
 
@@ -506,7 +507,7 @@ static int config_accept(const char *key, const char *value)
 		return 0;
 	}
 
-	if (0 == strcmp("Sqlite3Table", key)) {
+	if (string_eq("Sqlite3Table", key)) {
 		free(global_cfg.sqlite_tablename);
 		global_cfg.sqlite_tablename = strdup(value);
 		if (!global_cfg.sqlite_tablename)
