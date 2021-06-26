@@ -272,13 +272,13 @@ static void wrapper_free(void *p)
 	free_shm_log_entry(p);
 }
 
-static int config_accept(const char *key, const char *value)
+static int config_accept(const char *key, const char *value, size_t lineno)
 {
 	if (string_eq("LeaseTime", key)) {
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
 		if (res == ULONG_MAX || (*endptr != '\0' && !string_eq(endptr, "d")) || res < 1 || res >= INT_MAX)
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		lease_time = (time_t)res * 24 * 60 * 60;
 
 		return 0;
@@ -288,7 +288,7 @@ static int config_accept(const char *key, const char *value)
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
 		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= INT_MAX)
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		lease_remember_factor = (unsigned)res;
 
 		return 0;
@@ -305,7 +305,7 @@ static int config_accept(const char *key, const char *value)
 
 	if (string_eq("ShmLogName", key)) {
 		if (value[0] != '/' || value[1] == '\0')
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		free(shm_filename);
 		shm_filename = strdup(value);
 		if (!shm_filename)
@@ -318,13 +318,13 @@ static int config_accept(const char *key, const char *value)
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
 		if (res == ULONG_MAX || (*endptr != '\0' && !string_eq(endptr, "m")) || res >= INT_MAX)
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		state_sync_interval = (time_t)res;
 
 		return 0;
 	}
 
-	return log_error("Unsupported configuration option '%s' (with value '%s').", key, value);
+	return log_error("Unsupported configuration option '%s' at line %zu (with value '%s').", key, lineno, value);
 }
 
 static void usage(void)

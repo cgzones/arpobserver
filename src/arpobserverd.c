@@ -365,13 +365,13 @@ static void del_pid(void)
 		log_warn("Cannot delete pid file '%s': %m", global_cfg.pid_file);
 }
 
-static int config_accept(const char *key, const char *value)
+static int config_accept(const char *key, const char *value, size_t lineno)
 {
 	if (string_eq("HashSize", key)) {
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
 		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= 65536)
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		global_cfg.hashsize = (unsigned)res;
 
 		return 0;
@@ -406,7 +406,7 @@ static int config_accept(const char *key, const char *value)
 			return 0;
 		}
 
-		return log_error("Invalid value '%s' for option %s.", value, key);
+		return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 	}
 
 	if (string_eq("Promisc", key)) {
@@ -422,14 +422,14 @@ static int config_accept(const char *key, const char *value)
 			return 0;
 		}
 
-		return log_error("Invalid value '%s' for option %s.", value, key);
+		return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 	}
 
 	if (string_eq("RateLimit", key)) {
 		char *endptr;
 		long int res = strtol(value, &endptr, 10);
 		if (res == LONG_MAX || *endptr != '\0' || res < -1 || res >= INT_MAX)
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		global_cfg.ratelimit = (int)res;
 
 		return 0;
@@ -438,7 +438,7 @@ static int config_accept(const char *key, const char *value)
 
 	if (string_eq("ShmLogName", key)) {
 		if (value[0] != '/' || value[1] == '\0')
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		free(global_cfg.shm_data.filename);
 		global_cfg.shm_data.filename = strdup(value);
 		if (!global_cfg.shm_data.filename)
@@ -451,7 +451,7 @@ static int config_accept(const char *key, const char *value)
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
 		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= INT_MAX)
-			return log_error("Invalid value '%s' for option %s.", value, key);
+			return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 		global_cfg.shm_data.size = res;
 
 		return 0;
@@ -480,7 +480,7 @@ static int config_accept(const char *key, const char *value)
 	}
 #endif /* HAVE_LIBSQLITE3 */
 
-	return log_error("Unsupported configuration option '%s' (with value '%s').", key, value);
+	return log_error("Unsupported configuration option '%s' at line %zu (with value '%s').", key, lineno, value);
 }
 
 static void usage(void)

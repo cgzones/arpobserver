@@ -29,6 +29,7 @@ int parse_config_file(const char *path, config_accept_func func)
 	_cleanup_free_ char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
+	size_t lineno = 0;
 
 	assert(path);
 	assert(func);
@@ -42,6 +43,8 @@ int parse_config_file(const char *path, config_accept_func func)
 		_cleanup_free_ char *key = NULL, *value = NULL;
 		char quote = 0;
 		int r;
+
+		lineno++;
 
 		trim_right(line);
 
@@ -59,13 +62,13 @@ int parse_config_file(const char *path, config_accept_func func)
 		key_end = iter;
 
 		if (key_begin >= key_end || (!isspace((unsigned char)*iter) && *iter != '='))
-			return log_error("Invalid formatted key found in configuration line '%s' (0x%.2x)", line, *iter);
+			return log_error("Invalid formatted key found in configuration line %zu: '%s' (0x%.2x)", lineno, line, *iter);
 
 		/* skip whitespaces between key and '=' */
 		for (; isspace((unsigned char)*iter); ++iter) {}
 
 		if (*iter != '=')
-			return log_error("No assignment found in configuration line '%s' (0x%.2x)", line, *iter);
+			return log_error("No assignment found in configuration line %zu: '%s' (0x%.2x)", lineno, line, *iter);
 
 		++iter;
 
@@ -87,7 +90,7 @@ int parse_config_file(const char *path, config_accept_func func)
 
 		/* allow empty values */
 		if (value_begin > value_end || (quote != 0 && quote != *iter))
-			return log_error("Invalid formatted value found in configuration line '%s' (0x%.2x)", line, *iter);
+			return log_error("Invalid formatted value found in configuration line %zu: '%s' (0x%.2x)", lineno, line, *iter);
 
 		if (quote != 0)
 			++iter;
@@ -96,14 +99,14 @@ int parse_config_file(const char *path, config_accept_func func)
 		for (; isspace((unsigned char)*iter); ++iter) {}
 
 		if (*iter != '\0' && *iter != '#')
-			return log_error("Leftover content in configuration line '%s' (0x%.2x)", line, *iter);
+			return log_error("Leftover content in configuration line %zu: '%s' (0x%.2x)", lineno, line, *iter);
 
 		key = strndup(key_begin, (size_t)(key_end - key_begin));
 		value = strndup(value_begin, (size_t)(value_end - value_begin));
 		if (!key || !value)
 			return log_oom();
 
-		r = func(key, value);
+		r = func(key, value, lineno);
 		if (r < 0)
 			return r;
 	}
