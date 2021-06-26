@@ -54,7 +54,7 @@ Lines starting with a '#' are ignored.
     The default is 1 day.
 
 *LeaseRememberFactor*::
-    Time in multiple of *LeaseTime* to rember addresses. +
+    Time in multiple of *LeaseTime* to remember addresses. +
     Currently unused Ethernet/IP pairings are rembered for this amount of time to report previous usage hints. +
     The default is 5 times the *LeaseTime*.
 
