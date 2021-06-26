@@ -6,11 +6,11 @@
 #include "base64.h"
 #include "log.h"
 
-#define IN6_IS_ADDR_SN_MULTICAST(a, b)                                                                                                   \
-	(((__const uint32_t *)(a))[0] == htonl(0xff020000) && ((__const uint32_t *)(a))[1] == 0                                          \
-	 && ((__const uint32_t *)(a))[2] == htonl(0x00000001) && ((__const uint8_t *)(a))[12] == 0xff                                    \
-	 && ((__const uint8_t *)(a))[13] == ((__const uint8_t *)(b))[13] && ((__const uint8_t *)(a))[14] == ((__const uint8_t *)(b))[14] \
-	 && ((__const uint8_t *)(a))[15] == ((__const uint8_t *)(b))[15])
+#define IN6_IS_ADDR_SN_MULTICAST(a, b)                                                                                           \
+	(((const uint32_t *)(a))[0] == htonl(0xff020000) && ((const uint32_t *)(a))[1] == 0                                      \
+	 && ((const uint32_t *)(a))[2] == htonl(0x00000001) && ((const uint8_t *)(a))[12] == 0xff                                \
+	 && ((const uint8_t *)(a))[13] == ((const uint8_t *)(b))[13] && ((const uint8_t *)(a))[14] == ((const uint8_t *)(b))[14] \
+	 && ((const uint8_t *)(a))[15] == ((const uint8_t *)(b))[15])
 
 int check_arp(const struct pkt *p)
 {
