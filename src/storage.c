@@ -47,15 +47,16 @@ int ignorelist_add_ip(const char *ip_str)
 
 void ignorelist_free()
 {
-	for (struct ip_node *ip = ignorelist, *ip_next; ip; ip = ip_next) {
-		ip_next = ip->next;
+	for (struct ip_node *ip = ignorelist; ip;) {
+		struct ip_node *ip_next = ip->next;
 		free(ip);
+		ip = ip_next;
 	}
 
 	ignorelist = NULL;
 }
 
-struct ip_node *ignorelist_match_ip(const uint8_t *ip_addr, uint8_t addr_len)
+static const struct ip_node *ignorelist_match_ip(const uint8_t *ip_addr, uint8_t addr_len)
 {
 	assert(ip_addr);
 
@@ -79,10 +80,10 @@ _access_ro_(1) _access_roc_(2, 3) static uint16_t pkt_hash(const uint8_t *l2_add
 	assert(l2_addr);
 	assert(ip_addr);
 
-	for (int i = 0; i < 6; i += 2)
+	for (unsigned int i = 0; i < 6; i += 2)
 		sum = sum ^ *(const uint16_t *)(l2_addr + i);
 
-	for (int i = 0; i < len; i += 2)
+	for (unsigned int i = 0; i < len; i += 2)
 		sum = sum ^ *(const uint16_t *)(ip_addr + i);
 
 	sum = sum ^ vlan_tag;
