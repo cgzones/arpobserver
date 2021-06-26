@@ -96,8 +96,8 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		if (r < 0)
 			snprintf(protected_ip_str, sizeof(protected_ip_str), CONVERSION_FAILURE_STR);
 
-		log_warn("chk: node (IF = %s, MAC = %s, IP = %s) conflicts with protected entry: MAC = %s, IP = %s", e->interface, mac_str,
-			 ip_str, protected_mac_str, protected_ip_str);
+		log_warn("Event -- node (IF = [%s] & MAC = [%s] & IP = [%s]) conflicts with protected entry: MAC = [%s] & IP = [%s]",
+			 e->interface, mac_str, ip_str, protected_mac_str, protected_ip_str);
 		return;
 	}
 
@@ -118,7 +118,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			return;
 		}
 
-		log_info("chk: added initial cache entry: IF = %s, MAC = %s, IP = %s", e->interface, mac_str, ip_str);
+		log_info("Event -- added initial cache entry: IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
 		return;
 	}
 
@@ -148,8 +148,8 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 
 				convert_mac_addr_to_str(data->mac_address, mac_str_del);
 
-				log_debug("chk: deleted outdated cache entry: IF = %s, MAC = %s, IP = %s", data->interface, mac_str_del,
-					  ip_str_del);
+				log_debug("Event -- deleted outdated cache entry: IF = [%s] & MAC = [%s] & IP = [%s]", data->interface,
+					  mac_str_del, ip_str_del);
 			}
 
 			cur_e = dllist_delete_entry(state, cur_e);
@@ -163,11 +163,11 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 
 		// complete match
 		if (ip_match && mac_match) {
-			log_debug("chk: complete cache entry match");
+			log_debug("Event -- complete cache entry match for MAC [%s] & IP [%s]", mac_str, ip_str);
 
 			if (!string_eq(data->interface, e->interface)) {
-				log_notice("chk: interface changed for MAC address %s / IP address %s : %s -> %s", mac_str, ip_str,
-					   data->interface, e->interface);
+				log_notice("Event -- IF changed for MAC [%s] & IP [%s] from [%s] to [%s]", mac_str, ip_str, data->interface,
+					   e->interface);
 				safe_strncpy(data->interface, e->interface, IFNAMSIZ);
 			}
 
@@ -187,10 +187,10 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			convert_mac_addr_to_str(data->mac_address, data_mac_str);
 
 			if (lease_time <= last_seen_time)
-				log_info("chk: MAC address changed for IP address %s after a lease time of %ld seconds : %s -> %s", ip_str,
+				log_info("Event -- MAC changed for IP [%s] after a lease time of %ld seconds from [%s] to [%s]", ip_str,
 					 last_seen_time, data_mac_str, mac_str);
 			else
-				log_warn("chk: MAC address changed for IP address %s : %s -> %s", ip_str, data_mac_str, mac_str);
+				log_warn("Event -- MAC changed for IP [%s] from [%s] to [%s]", ip_str, data_mac_str, mac_str);
 
 			cur_e = dllist_delete_entry(state, cur_e);
 
@@ -210,10 +210,10 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			}
 
 			if (lease_time <= last_seen_time)
-				log_info("chk: IP address changed for MAC address %s after a lease time of %ld seconds : %s -> %s", mac_str,
+				log_info("Event -- IP changed for MAC [%s] after a lease time of %ld seconds from [%s] to [%s]", mac_str,
 					 last_seen_time, data_ip_str, ip_str);
 			else
-				log_warn("chk: IP address changed for MAC address %s : %s -> %s", mac_str, data_ip_str, ip_str);
+				log_warn("Event -- IP changed for MAC [%s] from [%s] to [%s]", mac_str, data_ip_str, ip_str);
 
 			cur_e = dllist_delete_entry(state, cur_e);
 
@@ -241,7 +241,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			return;
 		}
 
-		log_info("chk: added cache entry: IF = %s, MAC = %s, IP = %s", e->interface, mac_str, ip_str);
+		log_info("Event -- added cache entry for IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
 	}
 }
 
