@@ -35,7 +35,6 @@
 
 struct arpobserver_config global_cfg;
 
-// TODO: review
 static const char *const ip4_filter = "arp";
 static const char *const ip6_filter = "ip6 and not tcp and not udp and not esp and not ah";
 static const char *const def_filter = "ip6 and not tcp and not udp and not esp and not ah or arp";
