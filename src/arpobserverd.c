@@ -581,6 +581,7 @@ int main(int argc, char *argv[])
 	bool verbose = false;
 	const char *config_path = DEFAULT_CONFIG_PATH;
 
+	// clang-format off
 	const struct option long_options[] = {
 		{"all-interfaces",  no_argument,       NULL, 'A'},
 		{"config",          required_argument, NULL, 'c'},
@@ -595,6 +596,7 @@ int main(int argc, char *argv[])
 		{"version",         no_argument,       NULL, 'V'},
 		{0, 0, 0, 0},
 	};
+	// clang-format on
 
 	/* Default configuration */
 	memset(&global_cfg, 0, sizeof(global_cfg));
