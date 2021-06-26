@@ -16,4 +16,4 @@ apply-codespell:
 	codespell -C2 -Lnd,objext,ether --skip .git,config.log,depcomp,aclocal.m4,arpobserverd.8,arpobserver-checkd.8 -q 2
 
 apply-format:
-	clang-format-11 -i --Werror src/*.c src/*.h tests/*.c
+	clang-format-12 -i --Werror src/*.c src/*.h tests/*.c
