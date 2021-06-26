@@ -10,8 +10,6 @@
 #include "log.h"
 #include "storage.h"
 
-#define ARR_TO_INT32(x) (((uint32_t)(x)[0] << 24) | ((uint32_t)(x)[1] << 16) | ((uint32_t)(x)[2] << 8) | ((uint32_t)(x)[3]))
-
 void process_arp(struct pkt *p)
 {
 	const struct ether_arp *arp;
@@ -22,7 +20,7 @@ void process_arp(struct pkt *p)
 
 	p->ip_len = IP4_LEN;
 
-	if (ARR_TO_INT32(arp->arp_spa) == INADDR_ANY) {
+	if (be32toh(*(const uint32_t *)arp->arp_spa) == INADDR_ANY) {
 		p->l2_addr = arp->arp_sha;
 		p->ip_addr = arp->arp_tpa;
 		p->origin = ARP_ACD;
@@ -30,7 +28,7 @@ void process_arp(struct pkt *p)
 		return;
 	}
 
-	if (ntohs(arp->ea_hdr.ar_op) == ARPOP_REQUEST) {
+	if (be16toh(arp->ea_hdr.ar_op) == ARPOP_REQUEST) {
 		p->l2_addr = arp->arp_sha;
 		p->ip_addr = arp->arp_spa;
 		p->origin = ARP_REQ;
@@ -38,7 +36,7 @@ void process_arp(struct pkt *p)
 		return;
 	}
 
-	if (ntohs(arp->ea_hdr.ar_op) == ARPOP_REPLY) {
+	if (be16toh(arp->ea_hdr.ar_op) == ARPOP_REPLY) {
 		p->l2_addr = arp->arp_sha;
 		p->ip_addr = arp->arp_spa;
 		p->origin = ARP_REP;
