@@ -93,7 +93,7 @@ Installation
 
 To compile arpobserver you must have following development libraries:
 
-* libevent
+* libevent 2.0
 * libpcap
 * mysqlclient (optional)
 * sqlite3 (optional)

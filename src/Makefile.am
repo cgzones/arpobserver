@@ -78,4 +78,4 @@ arpobserver_mysql_SOURCES = arpobserver-mysql.c		\
 
 AM_CFLAGS += -DSYSCONFDIR='"$(sysconfdir)"' -DLOCALSTATEDIR='"$(localstatedir)"'
 
-arpobserverd_LDADD = @LIBEVENT_LIBS@
+arpobserverd_LDADD = @LIBEVENT2_LIBS@

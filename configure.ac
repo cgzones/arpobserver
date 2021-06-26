@@ -23,16 +23,7 @@ AS_CASE(["$with_check"],
     [PKG_CHECK_MODULES([CHECK], [check >= 0.11.0], [with_check=yes], [with_check=no])])
 AM_CONDITIONAL([WITH_CHECK], [test "x$with_check" = "xyes"])
 
-PKG_CHECK_MODULES(LIBEVENT, [libevent >= 1.4], , [
-    AC_CHECK_LIB([event], [event_dispatch], , [
-        AC_MSG_ERROR([libevent-1.4 or libevent-2.0 required!])
-    ])
-])
-
-PKG_CHECK_MODULES(LIBEVENT2, [libevent >= 2.0], [
-    AC_DEFINE([HAVE_LIBEVENT2], 1, [Define to 1 if you have libevent2])
-], [ ])
-
+PKG_CHECK_MODULES([LIBEVENT2], [libevent >= 2.0], [], [AC_MSG_ERROR([libevent-2.0 required!])])
 
 WITH_SQLITE3="no"
 AC_ARG_WITH([sqlite3],

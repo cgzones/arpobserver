@@ -112,11 +112,7 @@ static void pcap_callback(const struct iface_config *ifc, const struct pcap_pkth
 
 static unsigned timeout_cycles_without_packets = 0;
 
-#ifdef HAVE_LIBEVENT2
 static void read_cb(evutil_socket_t fd, short events, void *arg)
-#else
-static void read_cb(int fd, short events, void *arg)
-#endif
 {
 	struct pcap_pkthdr header;
 	const uint8_t *packet;
@@ -128,8 +124,10 @@ static void read_cb(int fd, short events, void *arg)
 
 	packet = pcap_next(ifc->pcap_handle, &header);
 
-	if (packet)
-		pcap_callback(ifc, &header, packet);
+	if (!packet)
+		return;
+
+	pcap_callback(ifc, &header, packet);
 }
 
 static int add_iface(const char *iface)
@@ -157,7 +155,7 @@ static int add_iface(const char *iface)
 		return log_oom();
 
 	if (global_cfg.hashsize < 1 || global_cfg.hashsize > 65536)
-		return log_errno_error(EINVAL, "%s: hash size (%d) must be >= 1 and <= 65536", __FUNCTION__, global_cfg.hashsize);
+		return log_errno_error(EINVAL, "%s: hash size (%d) must be >= 1 and <= 65536", __func__, global_cfg.hashsize);
 
 	if (global_cfg.ratelimit) {
 		ifc->cache = calloc(global_cfg.hashsize, sizeof(struct mcache_node));
@@ -207,18 +205,16 @@ static int add_iface(const char *iface)
 	rc = pcap_fileno(ifc->pcap_handle);
 	assert(rc != -1);
 
-#ifdef HAVE_LIBEVENT2
 	ifc->event = event_new(global_cfg.eb, rc, EV_READ | EV_PERSIST, read_cb, ifc);
-	if (!ifc->event) {
-		log_error("%s: event_new(...)", __FUNCTION__);
+	if (!ifc->event)
+		return log_error("Failed to create new event for interface %s: %m", ifc->name);
+
+	if (event_add(ifc->event, NULL) < 0) {
+		log_error("Failed to add event for interface %s: %m", ifc->name);
+		event_free(ifc->event);
+		ifc->event = NULL;
 		return -1;
 	}
-
-	event_add(ifc->event, NULL);
-#else
-	event_set(&ifc->event, rc, EV_READ | EV_PERSIST, read_cb, ifc);
-	event_add(&ifc->event, NULL);
-#endif
 
 	log_info("Opened interface %s (%s).", iface, pcap_datalink_val_to_description(pcap_datalink(ifc->pcap_handle)));
 
@@ -232,11 +228,11 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 {
 	struct iface_config *next = ifc->next;
 
-#ifdef HAVE_LIBEVENT2
 	event_free(ifc->event);
-#endif
+	ifc->event = NULL;
 	pcap_freecode(&ifc->pcap_filter);
 	pcap_close(ifc->pcap_handle);
+	ifc->pcap_handle = NULL;
 
 	log_debug("Closed interface %s", ifc->name);
 
@@ -254,11 +250,7 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 	return next;
 }
 
-#ifdef HAVE_LIBEVENT2
 static void reload_cb(evutil_socket_t fd, short events, void *arg)
-#else
-static void reload_cb(int fd, short events, void *arg)
-#endif
 {
 	log_debug("Received signal (%d), %s", fd, strsignal(fd));
 	log_debug("Reopening output");
@@ -268,27 +260,16 @@ static void reload_cb(int fd, short events, void *arg)
 	(void)!output_shm_reload();
 }
 
-#ifdef HAVE_LIBEVENT2
 static void stop_cb(evutil_socket_t fd, short events, void *arg)
-#else
-static void stop_cb(int fd, short events, void *arg)
-#endif
 {
 	log_debug("Received signal (%d), %s", fd, strsignal(fd));
 	log_debug("Stopping output");
 
-#ifdef HAVE_LIBEVENT2
-	event_base_loopbreak(global_cfg.eb);
-#else
-	event_loopbreak();
-#endif
+	if (event_base_loopbreak(global_cfg.eb) < 0)
+		log_warn("event_base_loopbreak() failed: %m");
 }
 
-#ifdef HAVE_LIBEVENT2
 static void timeout_cb(evutil_socket_t fd, short events, void *arg)
-#else
-static void timeout_cb(int fd, short events, void *arg)
-#endif
 {
 	log_debug("Timeout occurred.");
 
@@ -309,70 +290,53 @@ static void timeout_cb(int fd, short events, void *arg)
 
 static int libevent_init(void)
 {
-	// TODO: error handling of event functions
-
-	struct timeval timeout = {.tv_sec = TIMEOUT_SEC, .tv_usec = 0};   // non-const for libevent 1.4
+	const struct timeval timeout = {.tv_sec = TIMEOUT_SEC, .tv_usec = 0};
 
 	/* init */
-#ifdef HAVE_LIBEVENT2
 	global_cfg.eb = event_base_new();
-
-	if (!global_cfg.eb) {
-		log_error("%s: event_base_new() failed", __FUNCTION__);
-		return -1;
-	}
-#else
-	event_init();
-#endif
+	if (!global_cfg.eb)
+		return log_error("Failed to create new base event: %m");
 
 	/* SIGINT */
-#ifdef HAVE_LIBEVENT2
 	global_cfg.sigint_ev = event_new(global_cfg.eb, SIGINT, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(global_cfg.sigint_ev, NULL);
-#else
-	event_set(&global_cfg.sigint_ev, SIGINT, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(&global_cfg.sigint_ev, NULL);
-#endif
+	if (!global_cfg.sigint_ev)
+		return log_error("Failed to create new event for SIGINT: %m");
+	if (event_add(global_cfg.sigint_ev, NULL) < 0)
+		return log_error("Failed to add new event for SIGINT: %m");
 
 	/* SIGTERM */
-#ifdef HAVE_LIBEVENT2
 	global_cfg.sigterm_ev = event_new(global_cfg.eb, SIGTERM, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(global_cfg.sigterm_ev, NULL);
-#else
-	event_set(&global_cfg.sigterm_ev, SIGTERM, EV_SIGNAL | EV_PERSIST, stop_cb, NULL);
-	event_add(&global_cfg.sigterm_ev, NULL);
-#endif
+	if (!global_cfg.sigterm_ev)
+		return log_error("Failed to create new event for SIGTERM: %m");
+	if (event_add(global_cfg.sigterm_ev, NULL) < 0)
+		return log_error("Failed to add new event for SIGTERM: %m");
+
 
 	/* SIGHUP */
-#ifdef HAVE_LIBEVENT2
 	global_cfg.sighup_ev = event_new(global_cfg.eb, SIGHUP, EV_SIGNAL | EV_PERSIST, reload_cb, NULL);
-	event_add(global_cfg.sighup_ev, NULL);
-#else
-	event_set(&global_cfg.sighup_ev, SIGHUP, EV_SIGNAL | EV_PERSIST, reload_cb, NULL);
-	event_add(&global_cfg.sighup_ev, NULL);
-#endif
+	if (!global_cfg.sighup_ev)
+		return log_error("Failed to create new event for SIGHUP: %m");
+	if (event_add(global_cfg.sighup_ev, NULL) < 0)
+		return log_error("Failed to add new event for SIGHUP: %m");
 
 	/* timeout */
-#ifdef HAVE_LIBEVENT2
 	global_cfg.timeout_ev = event_new(global_cfg.eb, -1, EV_PERSIST, timeout_cb, NULL);
-	event_add(global_cfg.timeout_ev, &timeout);
-#else
-	event_set(&global_cfg.timeout_ev, -1, EV_PERSIST, timeout_cb, NULL);
-	event_add(&global_cfg.timeout_ev, &timeout);
-#endif
+	if (!global_cfg.sighup_ev)
+		return log_error("Failed to create new event for timeout: %m");
+	if (event_add(global_cfg.timeout_ev, &timeout) < 0)
+		return log_error("Failed to add new event for timeout: %m");
 
 	return 0;
 }
 
 static void libevent_close(void)
 {
-#ifdef HAVE_LIBEVENT2
+	event_free(global_cfg.timeout_ev);
 	event_free(global_cfg.sigint_ev);
 	event_free(global_cfg.sigterm_ev);
 	event_free(global_cfg.sighup_ev);
 
 	event_base_free(global_cfg.eb);
-#endif
 }
 
 static void save_pid(void)
@@ -767,11 +731,8 @@ int main(int argc, char *argv[])
 #endif
 
 	/* main loop */
-#ifdef HAVE_LIBEVENT2
-	event_base_dispatch(global_cfg.eb);
-#else
-	event_dispatch();
-#endif
+	if (event_base_dispatch(global_cfg.eb) < 0)
+		log_error("Event loop failed: %m");
 
 	log_info("Stopping %s..", MAIN_ARGV0);
 

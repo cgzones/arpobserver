@@ -22,11 +22,7 @@
 
 struct iface_config {
 	char *name;
-#ifdef HAVE_LIBEVENT2
 	struct event *event;
-#else
-	struct event event;
-#endif
 
 	int filter_active;
 	struct bpf_program pcap_filter;
@@ -81,17 +77,10 @@ struct arpobserver_config {
 
 	struct event_base *eb;
 
-#ifdef HAVE_LIBEVENT2
 	struct event *sigint_ev;
 	struct event *sigterm_ev;
 	struct event *sighup_ev;
 	struct event *timeout_ev;
-#else
-	struct event sigint_ev;
-	struct event sigterm_ev;
-	struct event sighup_ev;
-	struct event timeout_ev;
-#endif
 
 	struct iface_config *interfaces;
 };
