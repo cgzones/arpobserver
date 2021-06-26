@@ -48,6 +48,16 @@ Pairings will be forgotton after not seen for a lease time of 1 day.
 The configuration file consists of key-value pairs, separated by a '=' sign. +
 Lines starting with a '#' are ignored.
 
+*LeaseTime*::
+    Time in days for IP addresses to be leased. +
+    Ethernet/IP pairing changes of an address last used before more than this time are not considered extraordinary. +
+    The default is 1 day.
+
+*LeaseRememberFactor*::
+    Time in multiple of *LeaseTime* to rember addresses. +
+    Currently unused Ethernet/IP pairings are rembered for this amount of time to report previous usage hints. +
+    The default is 5 times the *LeaseTime*.
+
 *ProtectIP*::
     IP address to protect. +
     The first encountered Ethernet/IP pairing matching this IP address will determine the Ethernet address of this protect entry. +
@@ -65,6 +75,11 @@ Lines starting with a '#' are ignored.
 *ShmLogName*::
     Filename of the shared memory log name. +
     The default is '/arpobserver-shm-log'.
+
+*StateSyncInterval*::
+    Time interval to save the state to disk. +
+    The default is 5 minutes. +
+    Set to 0 to disable.
 
 
 [[protect]]

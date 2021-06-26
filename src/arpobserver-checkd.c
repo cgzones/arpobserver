@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <limits.h>
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -28,9 +29,9 @@
 
 static const char *state_file_path = CHECK_DEFAULT_STATE_FILE;
 static bool verbose = false;
-static const time_t lease_time = 60 * 60 * 24;     // 1d TODO: make configurable
-static const unsigned lease_outdated_factor = 5;   // 5 * lease_time TODO: make configurable
-static const time_t state_sync_time = 60 * 5;      // 5m TODO: make configurable
+static time_t lease_time = 24 * 60 * 60;      // 1d
+static unsigned lease_remember_factor = 5;    // 5 * lease_time
+static time_t state_sync_interval = 60 * 5;   // 5m
 static time_t last_sync_time = 0;
 
 static void process_entry(const struct shm_log_entry *e, void *arg)
@@ -123,7 +124,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 
 	now = time(NULL);
 
-	if (last_sync_time + state_sync_time < now) {
+	if (state_sync_interval != 0 && last_sync_time + state_sync_interval < now) {
 		(void)!write_state_file(state_file_path, state);
 		last_sync_time = now;
 	}
@@ -137,7 +138,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		assert(data);
 
 		// state entry outdated
-		if (data->timestamp + lease_outdated_factor * lease_time <= now) {
+		if (data->timestamp + lease_remember_factor * lease_time <= now) {
 			if (verbose) {
 				char mac_str_del[MAC_STR_LEN];
 				char ip_str_del[INET6_ADDRSTRLEN];
@@ -273,6 +274,26 @@ static void wrapper_free(void *p)
 
 static int config_accept(const char *key, const char *value)
 {
+	if (string_eq("LeaseTime", key)) {
+		char *endptr;
+		unsigned long int res = strtoul(value, &endptr, 10);
+		if (res == ULONG_MAX || (*endptr != '\0' && !string_eq(endptr, "d")) || res < 1 || res >= INT_MAX)
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		lease_time = (time_t)res * 24 * 60 * 60;
+
+		return 0;
+	}
+
+	if (string_eq("LeaseRememberFactor", key)) {
+		char *endptr;
+		unsigned long int res = strtoul(value, &endptr, 10);
+		if (res == ULONG_MAX || *endptr != '\0' || res < 1 || res >= INT_MAX)
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		lease_remember_factor = (unsigned)res;
+
+		return 0;
+	}
+
 	if (string_eq("ProtectIP", key))
 		return protect_ip(value);
 
@@ -289,6 +310,16 @@ static int config_accept(const char *key, const char *value)
 		shm_filename = strdup(value);
 		if (!shm_filename)
 			return log_oom();
+
+		return 0;
+	}
+
+	if (string_eq("StateSyncInterval", key)) {
+		char *endptr;
+		unsigned long int res = strtoul(value, &endptr, 10);
+		if (res == ULONG_MAX || (*endptr != '\0' && !string_eq(endptr, "m")) || res >= INT_MAX)
+			return log_error("Invalid value '%s' for option %s.", value, key);
+		state_sync_interval = (time_t)res;
 
 		return 0;
 	}
