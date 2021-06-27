@@ -171,6 +171,12 @@ int check_ra(const struct pkt *p)
 		return -1;
 	}
 
+	if (p->opt_tlla) {
+		log_warn("%s: Malformed ICMPv6 RA packet. Target link-layer address option is present. Packet dump: %s", p->ifc->name,
+			 base64_encode_packet(p));
+		return -1;
+	}
+
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) && p->opt_slla) {
 		log_warn(
 			"%s: Malformed ICMPv6 RA packet. Src IP is unspecified and source link-layer address option is present. Packet dump: %s",
