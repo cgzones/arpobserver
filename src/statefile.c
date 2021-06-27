@@ -242,7 +242,7 @@ int write_state_file(const char *path, const struct dllist_head *state)
 			continue;
 		}
 
-		fprintf(stream, "%lu,%s,%s,%s\n", data->timestamp, data->interface, mac_str, ip_str);
+		fprintf(stream, "%" PRIu64 ",%s,%s,%s\n", data->timestamp, data->interface, mac_str, ip_str);
 		count++;
 	}
 

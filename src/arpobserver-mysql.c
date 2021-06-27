@@ -249,7 +249,7 @@ static void bind_init(struct ctx_s *data)
 
 	memset(data->bind, 0, sizeof(data->bind));
 
-	data->bind[0].buffer_type = MYSQL_TYPE_LONGLONG;
+	data->bind[0].buffer_type = MYSQL_TYPE_TIMESTAMP;
 	data->bind[0].buffer = &data->bind_data.timestamp;
 
 	data->bind[1].buffer_type = MYSQL_TYPE_STRING;

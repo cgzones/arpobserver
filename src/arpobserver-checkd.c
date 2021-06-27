@@ -52,7 +52,8 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 
 	convert_mac_addr_to_str(e->mac_address, mac_str);
 
-	log_debug("arp packet: %lu %s %u %s %s %s", e->timestamp, e->interface, e->vlan_tag, mac_str, ip_str, pkt_origin_str[e->origin]);
+	log_debug("arp packet: %" PRIu64 " %s %u %s %s %s", e->timestamp, e->interface, e->vlan_tag, mac_str, ip_str,
+		  pkt_origin_str[e->origin]);
 
 	if (verbose) {
 		size_t i = 1;
@@ -187,8 +188,8 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			convert_mac_addr_to_str(data->mac_address, data_mac_str);
 
 			if (lease_time <= last_seen_time)
-				log_info("Event -- MAC changed for IP [%s] after a lease time of %ld seconds from [%s] to [%s]", ip_str,
-					 last_seen_time, data_mac_str, mac_str);
+				log_info("Event -- MAC changed for IP [%s] after a lease time of %" PRIu64 " seconds from [%s] to [%s]",
+					 ip_str, last_seen_time, data_mac_str, mac_str);
 			else
 				log_warn("Event -- MAC changed for IP [%s] from [%s] to [%s]", ip_str, data_mac_str, mac_str);
 
@@ -210,8 +211,8 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			}
 
 			if (lease_time <= last_seen_time)
-				log_info("Event -- IP changed for MAC [%s] after a lease time of %ld seconds from [%s] to [%s]", mac_str,
-					 last_seen_time, data_ip_str, ip_str);
+				log_info("Event -- IP changed for MAC [%s] after a lease time of %" PRIu64 " seconds from [%s] to [%s]",
+					 mac_str, last_seen_time, data_ip_str, ip_str);
 			else
 				log_warn("Event -- IP changed for MAC [%s] from [%s] to [%s]", mac_str, data_ip_str, ip_str);
 

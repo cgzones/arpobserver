@@ -26,7 +26,7 @@ static void process_entry(const struct shm_log_entry *e, _unused_ void *arg)
 		return;
 	}
 
-	log_info("%lu %s %u %s %s %s\n", e->timestamp, e->interface, e->vlan_tag, mac_str, ip_str, pkt_origin_str[e->origin]);
+	log_info("%" PRIu64 " %s %u %s %s %s\n", e->timestamp, e->interface, e->vlan_tag, mac_str, ip_str, pkt_origin_str[e->origin]);
 }
 
 static void usage(void)
