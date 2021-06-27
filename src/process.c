@@ -98,15 +98,14 @@ void process_ra(struct pkt *p)
 
 	p->ip_len = IP6_LEN;
 
-	if (p->opt_slla) {
-		p->l2_addr = (const uint8_t *)(p->opt_slla + 1);
-		p->ip_addr = (const uint8_t *)&p->ip6->ip6_src;
-		p->origin = ND_RA;
-		save_pairing(p);
+	/* RFC4861 allows the 'Source link-layer address' to be omitted. */
+	if (!p->opt_slla)
 		return;
-	}
 
-	log_notice("%s: Ignoring unknown IPv6 RA packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
+	p->l2_addr = (const uint8_t *)(p->opt_slla + 1);
+	p->ip_addr = (const uint8_t *)&p->ip6->ip6_src;
+	p->origin = ND_RA;
+	save_pairing(p);
 }
 
 void process_rs(struct pkt *p)
