@@ -192,8 +192,10 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	case ND_ROUTER_ADVERT:
 	case ND_ROUTER_SOLICIT:
 		return parse_nd(p);
-	case IPPROTO_ICMPV6:   // TODO: encapsulated IPv6?
-	case 143:              /* Multicast Listener Discovery Version 2 (MLDv2) for IPv6 */
+	case ICMP6_DST_UNREACH:  /* Destination unreachable */
+	case ICMP6_ECHO_REQUEST: /* Echo Request */
+	case ICMP6_ECHO_REPLY:   /* Echo Reply */
+	case 143:                /* Multicast Listener Discovery Version 2 (MLDv2) for IPv6 */
 		return -1;
 	default:
 		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d. Packet dump: %s", p->ifc->name, icmp6->icmp6_type,
