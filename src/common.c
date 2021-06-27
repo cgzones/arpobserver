@@ -16,7 +16,7 @@ const char *const pkt_origin_desc[] = {[ARP_REQ] = "ARP Request packet",
 				       NULL};
 
 
-void convert_mac_addr_to_str(const uint8_t addr[], char *str)
+void convert_mac_addr_to_str(const uint8_t addr[ETHER_ADDR_LEN], char *str)
 {
 	assert(addr);
 	assert(str);
@@ -24,7 +24,7 @@ void convert_mac_addr_to_str(const uint8_t addr[], char *str)
 	snprintf(str, MAC_STR_LEN, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
 
-int convert_mac_str_to_addr(const char *str, uint8_t addr[])
+int convert_mac_str_to_addr(const char *str, uint8_t addr[ETHER_ADDR_LEN])
 {
 	int rc;
 
@@ -36,7 +36,7 @@ int convert_mac_str_to_addr(const char *str, uint8_t addr[])
 	return rc == 6 ? 0 : -EINVAL;
 }
 
-int convert_ip4_addr_to_str(const void *addr, char *str)
+int convert_ip4_addr_to_str(const uint8_t addr[IP4_LEN], char *str)
 {
 	assert(addr);
 	assert(str);
@@ -47,7 +47,7 @@ int convert_ip4_addr_to_str(const void *addr, char *str)
 	return 0;
 }
 
-int convert_ip4_str_to_addr(const char *str, void *addr)
+int convert_ip4_str_to_addr(const char *str, uint8_t addr[IP4_LEN])
 {
 	int rc;
 
@@ -63,7 +63,7 @@ int convert_ip4_str_to_addr(const char *str, void *addr)
 	return -EINVAL;
 }
 
-int convert_ip6_addr_to_str(const void *addr, char *str)
+int convert_ip6_addr_to_str(const uint8_t addr[IP6_LEN], char *str)
 {
 	assert(addr);
 	assert(str);
@@ -74,7 +74,7 @@ int convert_ip6_addr_to_str(const void *addr, char *str)
 	return 0;
 }
 
-int convert_ip6_str_to_addr(const char *str, void *addr)
+int convert_ip6_str_to_addr(const char *str, uint8_t addr[IP6_LEN])
 {
 	int rc;
 
@@ -90,7 +90,7 @@ int convert_ip6_str_to_addr(const char *str, void *addr)
 	return -EINVAL;
 }
 
-int convert_ip_addr_to_str(const void *addr, int addr_len, char *str)
+int convert_ip_addr_to_str(const void *addr, uint8_t addr_len, char *str)
 {
 	if (addr_len == IP6_LEN)
 		return convert_ip6_addr_to_str(addr, str);

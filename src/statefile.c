@@ -119,13 +119,13 @@ _access_rwc_(1, 2) _nonnull_ static int parse_state_line(char *line, size_t len,
 
 	if (strchr(ip_str, '.') != NULL) {
 		new_data->ip_len = IP4_LEN;
-		if (convert_ip4_str_to_addr(ip_str, &new_data->ip_address) < 0) {
+		if (convert_ip4_str_to_addr(ip_str, new_data->ip_address) < 0) {
 			log_warn("%s: Cannot convert IPv4 address '%s' to binary form: %m", __func__, ip_str);
 			return 0;
 		}
 	} else if (strchr(ip_str, ':') != NULL) {
 		new_data->ip_len = IP6_LEN;
-		if (convert_ip6_str_to_addr(ip_str, &new_data->ip_address) < 0) {
+		if (convert_ip6_str_to_addr(ip_str, new_data->ip_address) < 0) {
 			log_warn("%s: Cannot convert IPv6 address '%s' to binary form: %m", __func__, ip_str);
 			return 0;
 		}
