@@ -14,7 +14,7 @@
 #define SYSLOG_ARGV0 "arpobserver-syslog"
 
 
-static void process_entry(const struct shm_log_entry *e, void *arg)
+static void process_entry(const struct shm_log_entry *e, _unused_ void *arg)
 {
 	char mac_str[MAC_STR_LEN];
 	char ip_str[INET6_ADDRSTRLEN];

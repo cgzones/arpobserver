@@ -248,6 +248,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 static volatile sig_atomic_t stop_loop = 0;
 static void signal_handler(int sig)
 {
+	log_debug("Signal %d caught.", sig);
 	stop_loop = 1;
 }
 static int setup_signals(void)

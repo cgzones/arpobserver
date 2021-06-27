@@ -78,7 +78,6 @@ AM_CFLAGS="\
  -Wmissing-format-attribute\
  -Wmissing-noreturn\
  -Wmissing-prototypes\
- -Wno-unused-parameter\
  -Wpointer-arith\
  -Wshadow\
  -Wstrict-prototypes\

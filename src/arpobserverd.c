@@ -112,7 +112,7 @@ static void pcap_callback(const struct iface_config *ifc, const struct pcap_pkth
 
 static unsigned timeout_cycles_without_packets = 0;
 
-static void read_cb(evutil_socket_t fd, short events, void *arg)
+static void read_cb(_unused_ evutil_socket_t fd, _unused_ short events, void *arg)
 {
 	struct pcap_pkthdr header;
 	const uint8_t *packet;
@@ -250,7 +250,7 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 	return next;
 }
 
-static void reload_cb(evutil_socket_t fd, short events, void *arg)
+static void reload_cb(evutil_socket_t fd, _unused_ short events, _unused_ void *arg)
 {
 	log_debug("Received signal (%d), %s", fd, strsignal(fd));
 	log_debug("Reopening output");
@@ -260,7 +260,7 @@ static void reload_cb(evutil_socket_t fd, short events, void *arg)
 	(void)!output_shm_reload();
 }
 
-static void stop_cb(evutil_socket_t fd, short events, void *arg)
+static void stop_cb(evutil_socket_t fd, _unused_ short events, _unused_ void *arg)
 {
 	log_debug("Received signal (%d), %s", fd, strsignal(fd));
 	log_debug("Stopping output");
@@ -269,7 +269,7 @@ static void stop_cb(evutil_socket_t fd, short events, void *arg)
 		log_warn("event_base_loopbreak() failed: %m");
 }
 
-static void timeout_cb(evutil_socket_t fd, short events, void *arg)
+static void timeout_cb(_unused_ evutil_socket_t fd, _unused_ short events, _unused_ void *arg)
 {
 	log_debug("Timeout occurred.");
 
