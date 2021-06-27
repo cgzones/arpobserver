@@ -45,7 +45,7 @@ int check_arp(const struct pkt *p)
 		convert_mac_addr_to_str(arp->arp_sha, mac_arp);
 		if (convert_ip4_addr_to_str(arp->arp_spa, ip_arp) < 0)
 			snprintf(ip_arp, sizeof(ip_arp), CONVERSION_FAILURE_STR);
-		log_warn("%s: Malformed ARP packet. Erhernet and ARP source address mismatch (%s != %s) [%s]. Packet dump: %s",
+		log_warn("%s: Malformed ARP packet. Ethernet and ARP source address mismatch (%s != %s) [%s]. Packet dump: %s",
 			 p->ifc->name, mac_ether, mac_arp, ip_arp, base64_encode_packet(p));
 		return -1;
 	}
