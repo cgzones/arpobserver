@@ -10,7 +10,8 @@ AC_PROG_INSTALL
 
 # Checks for required libraries.
 AC_CHECK_LIB([pcap], [pcap_open_live], [], [AC_MSG_ERROR([pcap library is required!])])
-AC_CHECK_LIB([rt], [shm_open], [], [AC_MSG_ERROR([shm framework is required!])])
+AC_SEARCH_LIBS([shm_open], [rt], [], [AC_MSG_ERROR([shm framework is required!])])
+AM_CONDITIONAL([LINK_RT], [test "x$ac_cv_search_shm_open" != "xno" && test "x$ac_cv_search_shm_open" != "xnone required"])
 
 AC_ARG_WITH([check],
     [AS_HELP_STRING([--with-check],
@@ -35,6 +36,7 @@ AS_CASE(["$with_sqlite3"],
     [yes], [AC_CHECK_LIB([sqlite3], [sqlite3_open], [], [AC_MSG_ERROR([sqlite3 library not found!])])],
     [no], [],
     [AC_CHECK_LIB([sqlite3], [sqlite3_open])])
+AM_CONDITIONAL([WITH_SQLITE3], [test "$ac_cv_lib_sqlite3_sqlite3_open" = yes])
 AS_IF([test "$ac_cv_lib_sqlite3_sqlite3_open" = yes], [WITH_SQLITE3="yes"])
 
 WITH_MYSQL="no"
@@ -48,7 +50,7 @@ AS_CASE(["$with_mysql"],
     [no], [],
     [AC_CHECK_LIB([mysqlclient], [mysql_real_connect])])
 AS_IF([test "$ac_cv_lib_mysqlclient_mysql_real_connect" = yes], [WITH_MYSQL="yes"])
-AM_CONDITIONAL([MYSQL], [test x$WITH_MYSQL = xyes])
+AM_CONDITIONAL([WITH_MYSQL], [test x$WITH_MYSQL = xyes])
 
 
 # Checks for required header files.

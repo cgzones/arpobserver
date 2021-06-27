@@ -1,7 +1,16 @@
 bin_PROGRAMS = arpobserverd arpobserver-checkd arpobserver-dumpstate arpobserver-stdout arpobserver-syslog
-if MYSQL
+if WITH_MYSQL
 bin_PROGRAMS += arpobserver-mysql
 endif
+
+AM_CFLAGS += -DSYSCONFDIR='"$(sysconfdir)"' -DLOCALSTATEDIR='"$(localstatedir)"'
+
+LIBS =
+if LINK_RT
+LIBS += -lrt
+endif
+
+LDADD =
 
 common_sources = arpobserver.h				\
 		 cleanup.h				\
@@ -38,6 +47,10 @@ arpobserverd_SOURCES = arpobserverd.c			\
 		       storage.c			\
 		       storage.h			\
 		       ${common_sources}
+arpobserverd_LDADD = @LIBEVENT2_LIBS@ -lpcap
+if WITH_SQLITE3
+arpobserverd_LDADD += -lsqlite3
+endif
 
 arpobserver_checkd_SOURCES = arpobserver-checkd.c	\
 			     configfile.c		\
@@ -51,6 +64,7 @@ arpobserver_checkd_SOURCES = arpobserver-checkd.c	\
 			     statefile.c		\
 			     statefile.h		\
 			     ${common_sources}
+arpobserver_checkd_LDADD =
 
 arpobserver_dumpstate_SOURCES = arpobserver-dumpstate.c	\
 				dllist.c		\
@@ -75,7 +89,4 @@ arpobserver_mysql_SOURCES = arpobserver-mysql.c		\
 			    shm_client.c		\
 			    shm_client.h		\
 			    ${common_sources}
-
-AM_CFLAGS += -DSYSCONFDIR='"$(sysconfdir)"' -DLOCALSTATEDIR='"$(localstatedir)"'
-
-arpobserverd_LDADD = @LIBEVENT2_LIBS@
+arpobserver_mysql_LDADD = -lmysqlclient
