@@ -140,7 +140,7 @@ int check_na(const struct pkt *p)
 		return -1;
 	}
 
-	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) && na->nd_na_flags_reserved & ND_NA_FLAG_SOLICITED) {
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) && (na->nd_na_flags_reserved & ND_NA_FLAG_SOLICITED)) {
 		log_warn("%s: Malformed ICMPv6 NA packet. Dst IP is multicast address, but Solicited flag is set. Packet dump: %s",
 			 p->ifc->name, base64_encode_packet(p));
 		return -1;

@@ -81,15 +81,14 @@ void process_na(struct pkt *p)
 
 	p->ip_len = IP6_LEN;
 
-	if (p->opt_tlla) {
-		p->l2_addr = (const uint8_t *)(p->opt_tlla + 1);
-		p->ip_addr = (const uint8_t *)&p->na->nd_na_target;
-		p->origin = ND_NA;
-		save_pairing(p);
+	/* RFC4861 allows the 'Source link-layer address' to be omitted. */
+	if (!p->opt_tlla)
 		return;
-	}
 
-	log_notice("%s: Ignoring unknown IPv6 NA packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
+	p->l2_addr = (const uint8_t *)(p->opt_tlla + 1);
+	p->ip_addr = (const uint8_t *)&p->na->nd_na_target;
+	p->origin = ND_NA;
+	save_pairing(p);
 }
 
 void process_ra(struct pkt *p)
