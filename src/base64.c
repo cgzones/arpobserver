@@ -48,7 +48,7 @@ void base64_encode(const uint8_t *src, char *dst, unsigned int ssize, unsigned i
 	}
 }
 
-char *base64_encode_packet(const struct pkt *p)
+const char *base64_encode_packet(const struct pkt *p)
 {
 	assert(p);
 
