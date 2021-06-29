@@ -13,6 +13,7 @@
 void process_arp(struct pkt *p)
 {
 	const struct ether_arp *arp;
+	uint16_t arp_opcode;
 
 	assert(p);
 
@@ -28,7 +29,9 @@ void process_arp(struct pkt *p)
 		return;
 	}
 
-	if (be16toh(arp->ea_hdr.ar_op) == ARPOP_REQUEST) {
+	arp_opcode = be16toh(arp->arp_op);
+
+	if (arp_opcode == ARPOP_REQUEST) {
 		p->l2_addr = arp->arp_sha;
 		p->ip_addr = arp->arp_spa;
 		p->origin = ARP_REQ;
@@ -36,7 +39,7 @@ void process_arp(struct pkt *p)
 		return;
 	}
 
-	if (be16toh(arp->ea_hdr.ar_op) == ARPOP_REPLY) {
+	if (arp_opcode == ARPOP_REPLY) {
 		p->l2_addr = arp->arp_sha;
 		p->ip_addr = arp->arp_spa;
 		p->origin = ARP_REP;
@@ -44,7 +47,7 @@ void process_arp(struct pkt *p)
 		return;
 	}
 
-	log_notice("%s: Ignoring unknown ARP packet. Packet dump: %s", p->ifc->name, base64_encode_packet(p));
+	log_notice("%s: Ignoring unknown ARP packet with opcode %d. Packet dump: %s", p->ifc->name, arp_opcode, base64_encode_packet(p));
 }
 
 void process_ns(struct pkt *p)
