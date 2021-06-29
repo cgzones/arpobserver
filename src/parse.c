@@ -123,7 +123,6 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 {
 	const struct ip6_hdr *ip6;
-	const struct ip6_ext *ip6e;
 	const struct icmp6_hdr *icmp6;
 
 	assert(p);
@@ -140,27 +139,32 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	p->len -= sizeof(struct ip6_hdr);
 
 	// Skip IPv6 extension headers
-	for (int next_header = ip6->ip6_nxt; next_header != IPPROTO_ICMPV6;) {
+	for (uint8_t next_header = ip6->ip6_nxt; next_header != IPPROTO_ICMPV6;) {
 		switch (next_header) {
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_ROUTING:
 		case IPPROTO_FRAGMENT:
-		case IPPROTO_DSTOPTS:
-			if (p->len < 8) {
-				log_warn("%s: Error parsing IPv6 packet. Extension header is too small (%zu of %d bytes)", p->ifc->name,
-					 p->len, 8);
+		case IPPROTO_DSTOPTS: {
+			const struct ip6_ext *ip6e;
+			size_t ext_len;
+
+			if (p->len < sizeof(struct ip6_ext)) {
+				log_warn("%s: Error parsing IPv6 packet. Extension header is too small (%zu of %zu bytes)", p->ifc->name,
+					 p->len, sizeof(struct ip6_ext));
 				return -2;
 			}
 			ip6e = (const struct ip6_ext *)p->pos;
-			if (p->len < ((unsigned)ip6e->ip6e_len + 1) * 8) {
-				log_warn("%s: Error parsing IPv6 packet. Extension header is too small (%zu of %d bytes)", p->ifc->name,
-					 p->len, (ip6e->ip6e_len + 1) * 8);
+			ext_len = ((size_t)ip6e->ip6e_len + 1) * 8;
+			if (p->len < ext_len) {
+				log_warn("%s: Error parsing IPv6 packet. Extension content is too small (%zu of %zu bytes)", p->ifc->name,
+					 p->len, ext_len);
 				return -2;
 			}
-			p->pos += (ip6e->ip6e_len + 1) * 8;
-			p->len -= ((unsigned)ip6e->ip6e_len + 1) * 8;
+			p->pos += ext_len;
+			p->len -= ext_len;
 			next_header = ip6e->ip6e_nxt;
 			break;
+		}
 		default:
 			log_notice("%s: Ignoring unknown IPv6 extension header %d", p->ifc->name, next_header);
 			return -1;
@@ -186,7 +190,7 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	case 143:              /* Multicast Listener Discovery Version 2 (MLDv2) for IPv6 */
 		return -1;
 	default:
-		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d", p->ifc->name, icmp6->icmp6_type);
+		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d", p->ifc->name, icmp6->icmp6_type, icmp6->icmp6_code);
 		return -1;
 	}
 }
