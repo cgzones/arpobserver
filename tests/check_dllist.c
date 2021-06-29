@@ -33,7 +33,7 @@ END_TEST
 
 START_TEST(test_random)
 {
-	const size_t rounds = 1000000;
+	const size_t rounds = 100000;
 	size_t max_size = 0, sum_size = 0;
 	struct dllist_head *h = dllist_init(free);
 
