@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "arpobserver.h"
+#include "base64.h"
 #include "log.h"
 
 _nonnull_ _wur_ static int parse_arp(struct pkt *p)
@@ -12,8 +13,8 @@ _nonnull_ _wur_ static int parse_arp(struct pkt *p)
 	assert(p);
 
 	if (p->len < sizeof(struct ether_arp)) {
-		log_warn("%s: Error parsing ARP packet. Packet is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-			 sizeof(struct ether_arp));
+		log_warn("%s: Error parsing ARP packet. Packet is too small (%zu of %zu bytes). Packet dump: %s", p->ifc->name, p->len,
+			 sizeof(struct ether_arp), base64_encode_packet(p));
 		return -2;
 	}
 
@@ -41,8 +42,8 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 
 	if (p->icmp6->icmp6_type == ND_NEIGHBOR_SOLICIT) {
 		if (p->len < sizeof(struct nd_neighbor_solicit)) {
-			log_warn("%s: Error parsing ICMPv6 ND_NS packet. Packet is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-				 sizeof(struct nd_neighbor_solicit));
+			log_warn("%s: Error parsing ICMPv6 ND_NS packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
+				 p->ifc->name, p->len, sizeof(struct nd_neighbor_solicit), base64_encode_packet(p));
 			return -2;
 		}
 		p->ns = (const struct nd_neighbor_solicit *)p->pos;
@@ -50,8 +51,8 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 		p->len -= sizeof(struct nd_neighbor_solicit);
 	} else if (p->icmp6->icmp6_type == ND_NEIGHBOR_ADVERT) {
 		if (p->len < sizeof(struct nd_neighbor_advert)) {
-			log_warn("%s: Error parsing ICMPv6 ND_NA packet. Packet is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-				 sizeof(struct nd_neighbor_advert));
+			log_warn("%s: Error parsing ICMPv6 ND_NA packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
+				 p->ifc->name, p->len, sizeof(struct nd_neighbor_advert), base64_encode_packet(p));
 			return -2;
 		}
 		p->na = (const struct nd_neighbor_advert *)p->pos;
@@ -59,8 +60,8 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 		p->len -= sizeof(struct nd_neighbor_advert);
 	} else if (p->icmp6->icmp6_type == ND_ROUTER_ADVERT) {
 		if (p->len < sizeof(struct nd_router_advert)) {
-			log_warn("%s: Error parsing ICMPv6 ND_RA packet. Packet is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-				 sizeof(struct nd_router_advert));
+			log_warn("%s: Error parsing ICMPv6 ND_RA packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
+				 p->ifc->name, p->len, sizeof(struct nd_router_advert), base64_encode_packet(p));
 			return -2;
 		}
 		p->ra = (const struct nd_router_advert *)p->pos;
@@ -68,8 +69,8 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 		p->len -= sizeof(struct nd_router_advert);
 	} else if (p->icmp6->icmp6_type == ND_ROUTER_SOLICIT) {
 		if (p->len < sizeof(struct nd_router_solicit)) {
-			log_warn("%s: Error parsing ICMPv6 ND_RS packet. Packet is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-				 sizeof(struct nd_router_solicit));
+			log_warn("%s: Error parsing ICMPv6 ND_RS packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
+				 p->ifc->name, p->len, sizeof(struct nd_router_solicit), base64_encode_packet(p));
 			return -2;
 		}
 		p->rs = (const struct nd_router_solicit *)p->pos;
@@ -90,13 +91,14 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 		opt = (const struct nd_opt_hdr *)p->pos;
 
 		if (opt->nd_opt_len == 0) {
-			log_warn("%s: Error parsing ICMPv6 ND options. Option length is 0.", p->ifc->name);
+			log_warn("%s: Error parsing ICMPv6 ND options. Option length is 0. Packet dump: %s", p->ifc->name,
+				 base64_encode_packet(p));
 			return -2;
 		}
 
 		if (p->len < opt->nd_opt_len * 8) {
-			log_warn("%s: Error parsing ICMPv6 ND options. Option header is too small (%zu of %d bytes)", p->ifc->name, p->len,
-				 opt->nd_opt_len * 8);
+			log_warn("%s: Error parsing ICMPv6 ND options. Option header is too small (%zu of %d bytes). Packet dump: %s",
+				 p->ifc->name, p->len, opt->nd_opt_len * 8, base64_encode_packet(p));
 			return -2;
 		}
 
@@ -126,8 +128,8 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	assert(p);
 
 	if (p->len < sizeof(struct ip6_hdr)) {
-		log_warn("%s: Error parsing IPv6 packet. Packet is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-			 sizeof(struct ip6_hdr));
+		log_warn("%s: Error parsing IPv6 packet. Packet is too small (%zu of %zu bytes). Packet dump: %s", p->ifc->name, p->len,
+			 sizeof(struct ip6_hdr), base64_encode_packet(p));
 		return -2;
 	}
 
@@ -147,15 +149,16 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 			size_t ext_len;
 
 			if (p->len < sizeof(struct ip6_ext)) {
-				log_warn("%s: Error parsing IPv6 packet. Extension header is too small (%zu of %zu bytes)", p->ifc->name,
-					 p->len, sizeof(struct ip6_ext));
+				log_warn("%s: Error parsing IPv6 packet. Extension header is too small (%zu of %zu bytes). Packet dump: %s",
+					 p->ifc->name, p->len, sizeof(struct ip6_ext), base64_encode_packet(p));
 				return -2;
 			}
 			ip6e = (const struct ip6_ext *)p->pos;
 			ext_len = ((size_t)ip6e->ip6e_len + 1) * 8;
 			if (p->len < ext_len) {
-				log_warn("%s: Error parsing IPv6 packet. Extension content is too small (%zu of %zu bytes)", p->ifc->name,
-					 p->len, ext_len);
+				log_warn(
+					"%s: Error parsing IPv6 packet. Extension content is too small (%zu of %zu bytes). Packet dump: %s",
+					p->ifc->name, p->len, ext_len, base64_encode_packet(p));
 				return -2;
 			}
 			p->pos += ext_len;
@@ -164,14 +167,14 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 			break;
 		}
 		default:
-			log_notice("%s: Ignoring unknown IPv6 extension header %d", p->ifc->name, next_header);
+			log_notice("%s: Ignoring unknown IPv6 extension header with type %d", p->ifc->name, next_header);
 			return -1;
 		}
 	}
 
 	if (p->len < sizeof(struct icmp6_hdr)) {
-		log_warn("%s: Error parsing ICMPv6 packet. Header is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-			 sizeof(struct icmp6_hdr));
+		log_warn("%s: Error parsing ICMPv6 packet. Header is too small (%zu of %zu bytes). Packet dump: %s", p->ifc->name, p->len,
+			 sizeof(struct icmp6_hdr), base64_encode_packet(p));
 		return -2;
 	}
 
@@ -188,7 +191,8 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	case 143:              /* Multicast Listener Discovery Version 2 (MLDv2) for IPv6 */
 		return -1;
 	default:
-		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d", p->ifc->name, icmp6->icmp6_type, icmp6->icmp6_code);
+		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d. Packet dump: %s", p->ifc->name, icmp6->icmp6_type,
+			   icmp6->icmp6_code, base64_encode_packet(p));
 		return -1;
 	}
 }
@@ -206,8 +210,8 @@ int parse_packet(struct pkt *p)
 	assert(p);
 
 	if (p->len < sizeof(struct ether_header)) {
-		log_warn("%s: Error parsing Ethernet packet. Packet is too small (%zu of %zu bytes)", p->ifc->name, p->len,
-			 sizeof(struct ether_header));
+		log_warn("%s: Error parsing Ethernet packet. Packet is too small (%zu of %zu bytes). Packet dump: %s", p->ifc->name, p->len,
+			 sizeof(struct ether_header), base64_encode_packet(p));
 		return -2;
 	}
 
