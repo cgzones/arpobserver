@@ -36,6 +36,7 @@ Makefile.in
 /tests/*.o
 /tests/*.trs
 /tests/.deps
+/tests/check_base64
 /tests/check_dllist
 
 TAGS
