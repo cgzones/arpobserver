@@ -39,3 +39,5 @@ Makefile.in
 /tests/check_dllist
 
 TAGS
+
+/state.tmp
