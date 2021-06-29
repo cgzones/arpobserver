@@ -20,15 +20,15 @@ int check_arp(const struct pkt *p)
 
 	arp = p->arp;
 
-	if (arp->ea_hdr.ar_hln != ETHER_ADDR_LEN) {
-		log_warn("%s: Malformed ARP packet. Wrong hardware size (got %d, expected %d). Packet dump: %s", p->ifc->name,
-			 arp->ea_hdr.ar_hln, ETHER_ADDR_LEN, base64_encode_packet(p));
+	if (arp->arp_hln != ETHER_ADDR_LEN) {
+		log_warn("%s: Malformed ARP packet. Wrong hardware size (got %d, expected %d). Packet dump: %s", p->ifc->name, arp->arp_hln,
+			 ETHER_ADDR_LEN, base64_encode_packet(p));
 		return -1;
 	}
 
-	if (arp->ea_hdr.ar_pln != IP4_LEN) {
-		log_warn("%s: Malformed ARP packet. Wrong protocol size (got %d, expected %d). Packet dump: %s", p->ifc->name,
-			 arp->ea_hdr.ar_pln, IP4_LEN, base64_encode_packet(p));
+	if (arp->arp_pln != IP4_LEN) {
+		log_warn("%s: Malformed ARP packet. Wrong protocol size (got %d, expected %d). Packet dump: %s", p->ifc->name, arp->arp_pln,
+			 IP4_LEN, base64_encode_packet(p));
 		return -1;
 	}
 
@@ -45,8 +45,9 @@ int check_arp(const struct pkt *p)
 		convert_mac_addr_to_str(arp->arp_sha, mac_arp);
 		if (convert_ip4_addr_to_str(arp->arp_spa, ip_arp) < 0)
 			snprintf(ip_arp, sizeof(ip_arp), CONVERSION_FAILURE_STR);
-		log_warn("%s: Malformed ARP packet. Ethernet and ARP source address mismatch (%s != %s) [%s]. Packet dump: %s",
-			 p->ifc->name, mac_ether, mac_arp, ip_arp, base64_encode_packet(p));
+		log_warn(
+			"%s: Malformed ARP packet with opcode %d. Ethernet and ARP source address mismatch (%s != %s) [%s]. Packet dump: %s",
+			p->ifc->name, be16toh(arp->arp_op), mac_ether, mac_arp, ip_arp, base64_encode_packet(p));
 		return -1;
 	}
 

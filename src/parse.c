@@ -22,15 +22,13 @@ _nonnull_ _wur_ static int parse_arp(struct pkt *p)
 	p->pos += sizeof(struct ether_arp);
 	p->len -= sizeof(struct ether_arp);
 
-	/* Skip non ARP packets */
-	if (be16toh(arp->ea_hdr.ar_hrd) != ARPHRD_ETHER) {
-		log_notice("%s: Ignoring non ARP packet of type %d", p->ifc->name, be16toh(arp->ea_hdr.ar_hrd));
+	if (be16toh(arp->arp_hrd) != ARPHRD_ETHER) {
+		log_notice("%s: Ignoring ARP packet with hardware address format %d", p->ifc->name, be16toh(arp->arp_hrd));
 		return -1;
 	}
 
-	/* Skip non IP ARP packets */
-	if (be16toh(arp->ea_hdr.ar_pro) != ETHERTYPE_IP) {
-		log_notice("%s: Ignoring non IP ARP packet of type %d", p->ifc->name, be16toh(arp->ea_hdr.ar_pro));
+	if (be16toh(arp->arp_pro) != ETHERTYPE_IP) {
+		log_notice("%s: Ignoring ARP packet with protocol address format %d", p->ifc->name, be16toh(arp->arp_pro));
 		return -1;
 	}
 
