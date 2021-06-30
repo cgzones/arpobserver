@@ -253,3 +253,12 @@ Ethernet/IP pairing discovery can be triggered by these types of events:
   and source address (from IPv6 header) is saved.
 * ND_RS - Router Solicitation packet. Source link-layer address (from NS option)
   and source address (from IPv6 header) is saved.
+
+Unexpected packets
+------------------
+
+When an invalid or unknown packet is detected arpobserver will log an according
+message and also print the raw packet decoded in base64. This packet dump can
+be converted to with your favorite base64 decoder
+(e.g. https://cryptii.com/pipes/base64-to-hex) and parsed with packet decoders,
+like https://hpd.gasmi.net/ or http://eon.sadjad.org/phd/.
