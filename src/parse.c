@@ -225,6 +225,18 @@ int parse_packet(struct pkt *p)
 	p->len -= sizeof(struct ether_header);
 
 	ether_type = be16toh(p->ether->ether_type);
+	if (ether_type == ETH_P_8021AD) {
+		p->pos += sizeof(struct vlan_header);
+		p->len -= sizeof(struct vlan_header);
+		ether_type = be16toh(*(const uint16_t *)(p->pos - 2));
+		if (ether_type != ETHERTYPE_VLAN) {
+			log_warn(
+				"%s: Error parsing Ethernet packet. Double tagged VLAN header followed by header with type %d (expected %d). Packet dump: %s",
+				p->ifc->name, ether_type, ETHERTYPE_VLAN, base64_encode_packet(p));
+			return -2;
+		}
+	}
+
 	if (ether_type == ETHERTYPE_VLAN) {
 		const struct vlan_header *vlanh = (const struct vlan_header *)(p->pos - 2);
 		p->vlan_tag = be16toh(vlanh->tci & 0xfff);
