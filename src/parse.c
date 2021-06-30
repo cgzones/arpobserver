@@ -186,6 +186,56 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	icmp6 = (const struct icmp6_hdr *)p->pos;
 	p->icmp6 = icmp6;
 
+	/* Windows 10 sends ICMPv6 packets with invalid checksum and type 58. */
+	if (icmp6->icmp6_type == IPPROTO_ICMPV6) {
+		log_debug("%s: Ignoring invalid IPv6 ICMPv6 packet with type %d and code %d. Packet dump: %s", p->ifc->name,
+			  icmp6->icmp6_type, icmp6->icmp6_code, base64_encode_packet(p));
+		return -1;
+	}
+
+	{
+		const uint16_t packet_checksum = be16toh(icmp6->icmp6_cksum);
+		uint32_t checksum = 0;
+
+		/* IPv6 Source Address */
+		for (size_t i = 0; i < sizeof(struct in6_addr) / 2; i++)
+			checksum += be16toh(*(((const uint16_t *)&ip6->ip6_src) + i));
+
+		/* IPv6 Destination Address */
+		for (size_t i = 0; i < sizeof(struct in6_addr) / 2; i++)
+			checksum += be16toh(*(((const uint16_t *)&ip6->ip6_dst) + i));
+
+		/* Upper-Layer Packet Length */
+		checksum += (uint32_t)p->len;
+
+		/* Next Header */
+		checksum += 0x3a;
+
+		/* ICMPv6 data */
+		{
+			const uint16_t *ptr = (const uint16_t *)p->pos;
+			size_t i = p->len;
+			for (; i > 1; i -= 2)
+				checksum += be16toh(*ptr++);
+			if (i > 0)
+				checksum += *((const uint8_t *)ptr);
+		}
+
+		/* Checksum is set empty for calculation */
+		checksum -= packet_checksum;
+
+		while (checksum >> 16)
+			checksum = (checksum & 0xffff) + (checksum >> 16);
+
+		checksum = (uint16_t)~checksum;
+
+		if (checksum != packet_checksum) {
+			log_warn("%s: Ignoring IPv6 ICMPv6 packet with invalid checksum %#04x, should be %#04x. Packet dump: %s",
+				 p->ifc->name, packet_checksum, checksum, base64_encode_packet(p));
+			return -1;
+		}
+	}
+
 	switch (icmp6->icmp6_type) {
 	case ND_NEIGHBOR_SOLICIT:
 	case ND_NEIGHBOR_ADVERT:
@@ -196,11 +246,6 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	case ICMP6_ECHO_REQUEST: /* Echo Request */
 	case ICMP6_ECHO_REPLY:   /* Echo Reply */
 	case 143:                /* Multicast Listener Discovery Version 2 (MLDv2) for IPv6 */
-		return -1;
-	case IPPROTO_ICMPV6:
-		/* Windows 10 sends invalid ICMPv6 packets with invalid checksum and type 58. */
-		log_debug("%s: Ignoring invalid IPv6 ICMPv6 packet with type %d and code %d. Packet dump: %s", p->ifc->name,
-			  icmp6->icmp6_type, icmp6->icmp6_code, base64_encode_packet(p));
 		return -1;
 	default:
 		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d. Packet dump: %s", p->ifc->name, icmp6->icmp6_type,
