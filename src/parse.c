@@ -197,6 +197,11 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	case ICMP6_ECHO_REPLY:   /* Echo Reply */
 	case 143:                /* Multicast Listener Discovery Version 2 (MLDv2) for IPv6 */
 		return -1;
+	case IPPROTO_ICMPV6:
+		/* Windows 10 sends invalid ICMPv6 packets with invalid checksum and type 58. */
+		log_debug("%s: Ignoring invalid IPv6 ICMPv6 packet with type %d and code %d. Packet dump: %s", p->ifc->name,
+			  icmp6->icmp6_type, icmp6->icmp6_code, base64_encode_packet(p));
+		return -1;
 	default:
 		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d. Packet dump: %s", p->ifc->name, icmp6->icmp6_type,
 			   icmp6->icmp6_code, base64_encode_packet(p));
