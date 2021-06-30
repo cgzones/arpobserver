@@ -28,5 +28,6 @@
 #define _format_(type, index, check) __attribute__((format(type, index, check)))
 #define _nonnull_                    __attribute__((nonnull))
 #define _noreturn_                   __attribute__((noreturn))
+#define _packed_                     __attribute__ ((packed))
 #define _unused_                     __attribute__((unused))
 #define _wur_                        __attribute__((warn_unused_result))

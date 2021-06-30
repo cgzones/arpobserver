@@ -6,6 +6,11 @@
 #include "base64.h"
 #include "log.h"
 
+struct vlan_header {
+	uint16_t tpid;
+	uint16_t tci;
+} _packed_;
+
 _nonnull_ _wur_ static int parse_arp(struct pkt *p)
 {
 	const struct ether_arp *arp;
@@ -221,9 +226,10 @@ int parse_packet(struct pkt *p)
 
 	ether_type = be16toh(p->ether->ether_type);
 	if (ether_type == ETHERTYPE_VLAN) {
-		p->vlan_tag = be16toh(*(const uint16_t *)p->pos) & 0xfff;
-		p->pos += 4;
-		p->len -= 4;
+		const struct vlan_header *vlanh = (const struct vlan_header *)(p->pos - 2);
+		p->vlan_tag = be16toh(vlanh->tci & 0xfff);
+		p->pos += sizeof(struct vlan_header);
+		p->len -= sizeof(struct vlan_header);
 		ether_type = be16toh(*(const uint16_t *)(p->pos - 2));
 	}
 
