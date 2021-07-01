@@ -12,8 +12,56 @@
 #include "output_sqlite.h"
 
 
-static struct ip_node *ignorelist;
+struct mac_list_node {
+	uint8_t addr[ETHER_ADDR_LEN];
+	struct mac_list_node *next;
+};
 
+static struct mac_list_node *arpbridgelist;
+
+int arpbridgelist_add(const char *mac_str)
+{
+	uint8_t addr[ETHER_ADDR_LEN];
+	struct mac_list_node *node;
+	int rc;
+
+	assert(mac_str);
+
+	rc = convert_mac_str_to_addr(mac_str, addr);
+	if (rc < 0)
+		return log_errno_warn(EINVAL, "Cannot ignore MAC '%s': not a valid address", mac_str);
+
+	node = malloc(sizeof(struct mac_list_node));
+	if (!node)
+		return log_oom();
+
+	memcpy(node->addr, addr, sizeof(node->addr));
+	node->next = arpbridgelist;
+	arpbridgelist = TAKE_PTR(node);
+	return 0;
+}
+
+bool arpbridgelist_contains(const uint8_t addr[ETHER_ADDR_LEN])
+{
+	for (const struct mac_list_node *node = arpbridgelist; node; node = node->next)
+		if (memcmp(node->addr, addr, sizeof(node->addr)) == 0)
+			return true;
+
+	return false;
+}
+
+void arpbridgelist_free()
+{
+	for (struct mac_list_node *n = arpbridgelist; n;) {
+		struct mac_list_node *next_node = n->next;
+		free(n);
+		n = next_node;
+	}
+
+	arpbridgelist = NULL;
+}
+
+static struct ip_node *ignorelist;
 
 int ignorelist_add_ip(const char *ip_str)
 {
@@ -22,7 +70,7 @@ int ignorelist_add_ip(const char *ip_str)
 
 	assert(ip_str);
 
-	ip = calloc(sizeof(struct ip_node), 1);
+	ip = malloc(sizeof(struct ip_node));
 	if (!ip)
 		return log_oom();
 

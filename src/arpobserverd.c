@@ -367,6 +367,13 @@ static void del_pid(void)
 
 static int config_accept(const char *key, const char *value, size_t lineno)
 {
+	if (string_eq("ArpBridge", key)) {
+		if (value[0] == '\0')
+			return 0;
+
+		return arpbridgelist_add(value);
+	}
+
 	if (string_eq("HashSize", key)) {
 		char *endptr;
 		unsigned long int res = strtoul(value, &endptr, 10);
@@ -381,7 +388,7 @@ static int config_accept(const char *key, const char *value, size_t lineno)
 		if (value[0] == '\0')
 			return 0;
 
-		return ignorelist_add_ip(optarg);
+		return ignorelist_add_ip(value);
 	}
 
 	if (string_eq("IPMode", key)) {
@@ -747,6 +754,7 @@ int main(int argc, char *argv[])
 
 	del_pid();
 	ignorelist_free();
+	arpbridgelist_free();
 
 	free(global_cfg.shm_data.filename);
 	free(global_cfg.sqlite_filename);

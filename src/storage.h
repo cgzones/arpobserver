@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "cleanup.h"
@@ -23,5 +24,9 @@ DEFINE_TRIVIAL_CLEANUP_FUNC(struct ip_node *, free_ip_node);
 
 int ignorelist_add_ip(const char *ip_str) _nonnull_ _wur_;
 void ignorelist_free(void);
+
+int arpbridgelist_add(const char *mac_str) _nonnull_ _wur_;
+bool arpbridgelist_contains(const uint8_t addr[ETHER_ADDR_LEN]) _wur_;
+void arpbridgelist_free(void);
 
 void save_pairing(const struct pkt *p) _nonnull_;

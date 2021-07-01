@@ -5,6 +5,7 @@
 #include "arpobserver.h"
 #include "base64.h"
 #include "log.h"
+#include "storage.h"
 
 #define IN6_IS_ADDR_SN_MULTICAST(a, b)                                                                                           \
 	(((const uint32_t *)(a))[0] == htobe32(0xff020000) && ((const uint32_t *)(a))[1] == 0                                    \
@@ -40,15 +41,22 @@ int check_arp(const struct pkt *p)
 		char mac_ether[MAC_STR_LEN];
 		char mac_arp[MAC_STR_LEN];
 		char ip_arp[INET_ADDRSTRLEN];
+		uint16_t opcode = be16toh(arp->arp_op);
 
 		convert_mac_addr_to_str(p->ether->ether_shost, mac_ether);
 		convert_mac_addr_to_str(arp->arp_sha, mac_arp);
 		if (convert_ip4_addr_to_str(arp->arp_spa, ip_arp) < 0)
 			snprintf(ip_arp, sizeof(ip_arp), CONVERSION_FAILURE_STR);
-		log_warn(
-			"%s: Malformed ARP packet with opcode %d. Ethernet and ARP source address mismatch (%s != %s) [%s]. Packet dump: %s",
-			p->ifc->name, be16toh(arp->arp_op), mac_ether, mac_arp, ip_arp, base64_encode_packet(p));
-		return -1;
+
+		if (opcode != 1 || !arpbridgelist_contains(p->ether->ether_shost)) {
+			log_warn(
+				"%s: Malformed ARP packet with opcode %d. Ethernet and ARP source address mismatch (%s != %s) [%s]. Packet dump: %s",
+				p->ifc->name, opcode, mac_ether, mac_arp, ip_arp, base64_encode_packet(p));
+			return -1;
+		}
+
+		log_debug("%s: ARP request packet with Ethernet and ARP source address mismatch (%s != %s) [%s] allowed as ARP bridge",
+			  p->ifc->name, mac_ether, mac_arp, ip_arp);
 	}
 
 	return 0;

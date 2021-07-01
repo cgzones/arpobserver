@@ -66,6 +66,12 @@ All debug, warning, and error messages will be printed to *stderr* by default.
 The configuration file consists of key-value pairs, separated by a '=' sign. +
 Lines starting with a '#' are ignored.
 
+*ArpBridge*::
+    Accept ARP requests with source address mismatches from the specified MAC address. +
+    Can be specified multiple times. +
+    ARP request packets can be proxied by an access point leading to an Ethernet and ARP source address mismatch. +
+    By default arpobserver warns on those mismatches and does not process them further.
+
 *HashSize*::
     Size of ratelimiting hash table used to store recent Ethernet/Ip address pairings. +
     The size of hash table should be increased in active networks with many nodes. +
