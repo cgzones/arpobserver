@@ -44,3 +44,5 @@ TAGS
 /state.tmp
 
 /.vscode/
+
+/build/
