@@ -6,8 +6,6 @@
 
 * WARN : eth0: Malformed ARP packet with opcode 256. Ethernet and ARP source address mismatch (d2:74:7f:... != 3a:76:46:...) [159.69...]. Packet dump: ...
 
-* Ignoring unknown IPv6 ICMP6 type 58 with code 0. Packet dump: MzMAAAAWGMBND0fbht1gAAAAACQ6Af6AAAAAAAAAGNkyfZQab/f/AgAAAAAAAAAAAAAAAAAWOgAFAgAAAQCPACCfAAAAAQQAAAD/AgAAAAAAAAAAAAAAAQAD
-
 * rework man pages after configuration file addition
 * mysql man page
 
