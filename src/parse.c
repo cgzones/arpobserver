@@ -226,7 +226,7 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 			for (; i > 1; i -= 2)
 				checksum += be16toh(*ptr++);
 			if (i > 0)
-				checksum += *((const uint8_t *)ptr);
+				checksum += be16toh(*((const uint8_t *)ptr));
 		}
 
 		/* Checksum is set empty for calculation */
