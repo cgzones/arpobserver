@@ -129,6 +129,7 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 {
 	const struct ip6_hdr *ip6;
 	const struct icmp6_hdr *icmp6;
+	uint16_t payload_len;
 
 	assert(p);
 
@@ -142,6 +143,13 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	p->ip6 = ip6;
 	p->pos += sizeof(struct ip6_hdr);
 	p->len -= sizeof(struct ip6_hdr);
+
+	payload_len = be16toh(ip6->ip6_plen);
+	if (payload_len != p->len) {
+		log_warn("%s: Error parsing IPv6 packet. Payload length mismatch(%zu vs %u bytes). Packet dump: %s", p->ifc->name, p->len,
+			 payload_len, base64_encode_packet(p));
+		return -2;
+	}
 
 	// Skip IPv6 extension headers
 	for (uint8_t next_header = ip6->ip6_nxt; next_header != IPPROTO_ICMPV6;) {
