@@ -102,7 +102,7 @@ END_TEST
 
 START_TEST(test_random)
 {
-	const size_t rounds = 100000;
+	const size_t rounds = 10000;
 #define MAX_DATA_SIZE 400
 
 	unsigned char data[MAX_DATA_SIZE];
