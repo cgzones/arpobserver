@@ -21,27 +21,26 @@ jobs:
         sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-12 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-12 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
-    - name: install asciidoctor and check from Debian sid
+      run: sudo apt-get install -y clang-12 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
+    - name: install asciidoctor, check and meson from Debian sid
       run: |
           wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
           sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
           sudo apt-get update -q
-          sudo apt-get install -y asciidoctor check
-    - name: autogen
-      run: ./autogen.sh
-    - name: configure
-      run: ./configure --enable-werror
-    - name: make
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS=--enable-werror
+          sudo apt-get install -y asciidoctor check meson
+    - name: setup
+      run: meson setup build -Dwerror=true
+    - name: build
+      run: meson compile -C build/
+    - name: test
+      run: meson test -C build/
 
   weverything_build:
     name: Clang Weverything Build
     runs-on: ubuntu-latest
+    env:
+      CC: clang-12
+      CFLAGS: '-O2 -flto -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align'
     steps:
     - uses: actions/checkout@v2
     - name: install clang repo
@@ -50,21 +49,19 @@ jobs:
         sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-12 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-12 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
-    - name: install asciidoctor and check from Debian sid
+      run: sudo apt-get install -y clang-12 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
+    - name: install asciidoctor, check and meson from Debian sid
       run: |
           wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
           sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
           sudo apt-get update -q
-          sudo apt-get install -y asciidoctor check
-    - name: autogen
-      run: ./autogen.sh
-    - name: configure
-      run: ./configure --enable-werror CC=clang-12 CFLAGS="-O2 -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align"
-    - name: make
-      run: make
-    - name: make check
-      run: make check
+          sudo apt-get install -y asciidoctor check meson
+    - name: setup
+      run: meson setup build -Dwerror=true
+    - name: build
+      run: meson compile -C build/
+    - name: test
+      run: meson test -C build/
 
   whitespace_check:
     name: Whitespace Check
