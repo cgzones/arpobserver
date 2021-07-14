@@ -34,6 +34,48 @@ static unsigned lease_remember_factor = 5;    // 5 * lease_time
 static time_t state_sync_interval = 60 * 5;   // 5m
 static time_t last_sync_time = 0;
 
+#define FMT_TIMESTAMP_SIZE 16
+static char *format_timestamp(char *buffer, size_t size, time_t time)
+{
+	struct tm t;
+	size_t rc;
+
+	assert(buffer);
+	assert(size >= FMT_TIMESTAMP_SIZE);
+
+	localtime_r(&time, &t);
+	rc = strftime(buffer, size, "%b %d %T", &t);
+	if (rc == 0)
+		snprintf(buffer, size, "<invalid>");
+
+	return buffer;
+}
+
+static const uint8_t *
+	find_ip_address(const struct dllist_head *state, char interface[IFNAMSIZ], uint8_t mac_address[ETHER_ADDR_LEN], uint8_t ip_len)
+{
+	assert(state);
+	assert(mac_address);
+	assert(ip_len == IP4_LEN || ip_len == IP6_LEN);
+
+	for (struct dllist_entry *cur_e = state->first; cur_e; cur_e = cur_e->next) {
+		const struct shm_log_entry *data = cur_e->data;
+
+		if (data->ip_len != ip_len)
+			continue;
+
+		if (!string_eq(data->interface, interface))
+			continue;
+
+		if (0 != memcmp(data->mac_address, mac_address, sizeof(data->mac_address)))
+			continue;
+
+		return data->ip_address;
+	}
+
+	return NULL;
+}
+
 static void process_entry(const struct shm_log_entry *e, void *arg)
 {
 	time_t now;
@@ -41,6 +83,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 	char mac_str[MAC_STR_LEN];
 	char ip_str[INET6_ADDRSTRLEN];
 	const struct protect_entry *found_match;
+	bool event_logged = false;
 
 	assert(e);
 	assert(state);
@@ -97,8 +140,8 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		if (r < 0)
 			snprintf(protected_ip_str, sizeof(protected_ip_str), CONVERSION_FAILURE_STR);
 
-		log_warn("Event -- node (IF = [%s] & MAC = [%s] & IP = [%s]) conflicts with protected entry: MAC = [%s] & IP = [%s]",
-			 e->interface, mac_str, ip_str, protected_mac_str, protected_ip_str);
+		log_warn("Event -- IF = [%s] & MAC = [%s] & IP = [%s] conflicts with protected entry: MAC = [%s] & IP = [%s]", e->interface,
+			 mac_str, ip_str, protected_mac_str, protected_ip_str);
 		return;
 	}
 
@@ -119,7 +162,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			return;
 		}
 
-		log_info("Event -- added initial cache entry: IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
+		log_info("Event -- New initial entry: IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
 		return;
 	}
 
@@ -134,6 +177,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		bool ip_type_match;
 		bool ip_match;
 		bool mac_match;
+		bool if_match;
 		struct shm_log_entry *data = cur_e->data;
 
 		assert(data);
@@ -143,13 +187,15 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			if (verbose) {
 				char mac_str_del[MAC_STR_LEN];
 				char ip_str_del[INET6_ADDRSTRLEN];
+				char format_buffer[FMT_TIMESTAMP_SIZE];
 
 				if (convert_ip_addr_to_str(data->ip_address, data->ip_len, ip_str_del) < 0)
 					snprintf(ip_str_del, sizeof(ip_str_del), CONVERSION_FAILURE_STR);
 
 				convert_mac_addr_to_str(data->mac_address, mac_str_del);
 
-				log_debug("Event -- deleted outdated cache entry: IF = [%s] & MAC = [%s] & IP = [%s]", data->interface,
+				log_debug("Event -- deleted outdated cache entry last seen %s: IF = [%s] & MAC = [%s] & IP = [%s]",
+					  format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp), data->interface,
 					  mac_str_del, ip_str_del);
 			}
 
@@ -161,14 +207,15 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		ip_type_match = (data->ip_len == e->ip_len);
 		ip_match = ip_type_match && (0 == memcmp(data->ip_address, e->ip_address, e->ip_len));
 		mac_match = (0 == memcmp(data->mac_address, e->mac_address, sizeof e->mac_address));
+		if_match = string_eq(data->interface, e->interface);
 
 		// complete match
 		if (ip_match && mac_match) {
 			log_debug("Event -- complete cache entry match for MAC [%s] & IP [%s]", mac_str, ip_str);
 
-			if (!string_eq(data->interface, e->interface)) {
-				log_notice("Event -- IF changed for MAC [%s] & IP [%s] from [%s] to [%s]", mac_str, ip_str, data->interface,
-					   e->interface);
+			if (!if_match) {
+				log_warn("Event -- IF changed for MAC [%s] & IP [%s] from [%s] to [%s]", mac_str, ip_str, data->interface,
+					 e->interface);
 				safe_strncpy(data->interface, e->interface, IFNAMSIZ);
 			}
 
@@ -184,15 +231,33 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		if (ip_match) {
 			char data_mac_str[MAC_STR_LEN];
 			const time_t last_seen_time = now - data->timestamp;
+			char format_buffer[FMT_TIMESTAMP_SIZE];
 
 			convert_mac_addr_to_str(data->mac_address, data_mac_str);
 
-			if (lease_time <= last_seen_time)
-				log_info("Event -- MAC changed for IP [%s] after a lease time of %" PRIu64 " seconds from [%s] to [%s]",
-					 ip_str, last_seen_time, data_mac_str, mac_str);
-			else
-				log_warn("Event -- MAC changed for IP [%s] from [%s] to [%s]", ip_str, data_mac_str, mac_str);
+			if (if_match) {
+				if (lease_time <= last_seen_time)
+					log_info("Event -- MAC changed for IP [%s], last seen %s, after a lease time of %" PRIu64
+						 " seconds from [%s] to [%s]",
+						 ip_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						 last_seen_time, data_mac_str, mac_str);
+				else
+					log_warn("Event -- MAC changed for IP [%s], last seen %s, from [%s] to [%s]", ip_str,
+						 format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp), data_mac_str,
+						 mac_str);
+			} else {
+				if (lease_time <= last_seen_time)
+					log_notice("Event -- IF and MAC changed for IP [%s], last seen %s, after a lease time of %" PRIu64
+						   " seconds from [%s] & [%s] to [%s] & [%s]",
+						   ip_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						   last_seen_time, data->interface, data_mac_str, e->interface, mac_str);
+				else
+					log_warn("Event -- IF and MAC changed for IP [%s], last seen %s, from [%s] & [%s] to [%s] & [%s]",
+						 ip_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						 data->interface, data_mac_str, e->interface, mac_str);
+			}
 
+			event_logged = true;
 			cur_e = dllist_delete_entry(state, cur_e);
 
 			// add the new entry at the end -- it might collide with other mac addresses as well
@@ -203,6 +268,10 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		if (mac_match && ip_type_match) {
 			const time_t last_seen_time = now - data->timestamp;
 			char data_ip_str[INET6_ADDRSTRLEN];
+			uint8_t other_ip_len = (data->ip_len == IP4_LEN) ? IP6_LEN : IP4_LEN;
+			const uint8_t *other_ip;
+			char other_ip_str[INET6_ADDRSTRLEN];
+			char format_buffer[FMT_TIMESTAMP_SIZE];
 
 			if (convert_ip_addr_to_str(data->ip_address, data->ip_len, data_ip_str) < 0) {
 				log_warn("%s: Cannot convert IP address to textual form: %m", __func__);
@@ -210,12 +279,40 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 				continue;
 			}
 
-			if (lease_time <= last_seen_time)
-				log_info("Event -- IP changed for MAC [%s] after a lease time of %" PRIu64 " seconds from [%s] to [%s]",
-					 mac_str, last_seen_time, data_ip_str, ip_str);
-			else
-				log_warn("Event -- IP changed for MAC [%s] from [%s] to [%s]", mac_str, data_ip_str, ip_str);
+			other_ip = find_ip_address(state, data->interface, data->mac_address, other_ip_len);
+			if (other_ip) {
+				if (convert_ip_addr_to_str(other_ip, other_ip_len, other_ip_str) < 0) {
+					log_warn("%s: Cannot convert IP address to textual form: %m", __func__);
+					snprintf(other_ip_str, sizeof(other_ip_str), "error");
+				}
+			} else
+				snprintf(other_ip_str, sizeof(other_ip_str), "none");
 
+			if (if_match) {
+				if (lease_time <= last_seen_time)
+					log_info("Event -- IP changed for MAC [%s], last seen %s, after a lease time of %" PRIu64
+						 " seconds from [%s] to [%s] (other IP [%s])",
+						 mac_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						 last_seen_time, data_ip_str, ip_str, other_ip_str);
+				else
+					log_warn("Event -- IP changed for MAC [%s], last seen %s, from [%s] to [%s] (other IP [%s])",
+						 mac_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						 data_ip_str, ip_str, other_ip_str);
+			} else {
+				if (lease_time <= last_seen_time)
+					log_notice("Event -- IF and IP changed for MAC [%s], last seen %s, after a lease time of %" PRIu64
+						   " seconds from [%s] & [%s] to [%s] & [%s] (other IP [%s])",
+						   mac_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						   last_seen_time, data->interface, data_ip_str, e->interface, ip_str, other_ip_str);
+
+				else
+					log_warn(
+						"Event -- IF and IP changed for MAC [%s], last seen %s, from [%s] & [%s] to [%s] & [%s] (other IP [%s])",
+						mac_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						data->interface, data_ip_str, e->interface, ip_str, other_ip_str);
+			}
+
+			event_logged = true;
 			cur_e = dllist_delete_entry(state, cur_e);
 
 			// add the new entry at the end -- it might collide with other ip addresses as well
@@ -242,7 +339,10 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			return;
 		}
 
-		log_info("Event -- added cache entry for IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
+		if (event_logged)
+			log_debug("Event -- added cache entry for IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
+		else
+			log_info("Event -- New entry for IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
 	}
 }
 
