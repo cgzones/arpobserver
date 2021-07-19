@@ -52,7 +52,7 @@ static char *format_timestamp(char *buffer, size_t size, time_t time)
 }
 
 static const uint8_t *
-	find_ip_address(const struct dllist_head *state, char interface[IFNAMSIZ], uint8_t mac_address[ETHER_ADDR_LEN], uint8_t ip_len)
+	find_ip_address(const struct dllist_head *state, const char interface[IFNAMSIZ], const uint8_t mac_address[ETHER_ADDR_LEN], uint8_t ip_len)
 {
 	assert(state);
 	assert(mac_address);
@@ -325,6 +325,9 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 	// add current entry to the start of the list
 	{
 		_cleanup_shmlogentry_ struct shm_log_entry *new_data = NULL;
+		uint8_t other_ip_len = (e->ip_len == IP4_LEN) ? IP6_LEN : IP4_LEN;
+		const uint8_t *other_ip;
+		char other_ip_str[INET6_ADDRSTRLEN];
 
 		new_data = malloc(sizeof(struct shm_log_entry));
 		if (!new_data) {
@@ -339,10 +342,21 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			return;
 		}
 
+		other_ip = find_ip_address(state, e->interface, e->mac_address, other_ip_len);
+		if (other_ip) {
+			if (convert_ip_addr_to_str(other_ip, other_ip_len, other_ip_str) < 0) {
+				log_warn("%s: Cannot convert IP address to textual form: %m", __func__);
+				snprintf(other_ip_str, sizeof(other_ip_str), "error");
+			}
+		} else
+			snprintf(other_ip_str, sizeof(other_ip_str), "none");
+
 		if (event_logged)
-			log_debug("Event -- added cache entry for IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
+			log_debug("Event -- added cache entry for IF = [%s] & MAC = [%s] & IP = [%s] (other IP [%s])", e->interface,
+				  mac_str, ip_str, other_ip_str);
 		else
-			log_info("Event -- New entry for IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
+			log_info("Event -- New entry for IF = [%s] & MAC = [%s] & IP = [%s] (other IP [%s])", e->interface, mac_str, ip_str,
+				 other_ip_str);
 	}
 }
 
