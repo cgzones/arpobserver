@@ -42,3 +42,5 @@ Makefile.in
 TAGS
 
 /state.tmp
+
+/.vscode/
