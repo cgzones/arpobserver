@@ -51,8 +51,10 @@ static char *format_timestamp(char *buffer, size_t size, time_t time)
 	return buffer;
 }
 
-static const uint8_t *
-	find_ip_address(const struct dllist_head *state, const char interface[IFNAMSIZ], const uint8_t mac_address[ETHER_ADDR_LEN], uint8_t ip_len)
+static const uint8_t *find_ip_address(const struct dllist_head *state,
+				      const char interface[IFNAMSIZ],
+				      const uint8_t mac_address[ETHER_ADDR_LEN],
+				      uint8_t ip_len)
 {
 	assert(state);
 	assert(mac_address);
