@@ -28,7 +28,6 @@ int parse_config_file(const char *path, config_accept_func func)
 	_cleanup_fclose_ FILE *stream = NULL;
 	_cleanup_free_ char *line = NULL;
 	size_t len = 0;
-	ssize_t read;
 	size_t lineno = 0;
 
 	assert(path);
@@ -38,7 +37,7 @@ int parse_config_file(const char *path, config_accept_func func)
 	if (!stream)
 		return log_error("Cannot open configuration file '%s': %m", path);
 
-	while ((read = getline(&line, &len, stream)) != -1) {
+	while (getline(&line, &len, stream) != -1) {
 		const char *iter, *key_begin, *key_end, *value_begin, *value_end;
 		_cleanup_free_ char *key = NULL, *value = NULL;
 		char quote = 0;
