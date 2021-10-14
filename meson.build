@@ -212,6 +212,18 @@ if dep_mysql.found()
     )
 endif
 
+executable('packet-parser',
+    [
+     'src/base64.c',
+     'src/check_packet.c',
+     'src/common.c',
+     'src/log.c',
+     'src/packet-parser.c',
+     'src/parse.c',
+    ],
+    install: false,
+)
+
 
 if dep_check.found()
     base64 = executable(
