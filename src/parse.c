@@ -112,9 +112,19 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 
 		switch (opt->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
+			if (p->opt_slla) {
+				log_warn("%s: Error parsing ICMPv6 ND options. Multiple source link addresses. Packet dump: %s",
+					 p->ifc->name, base64_encode_packet(p));
+				return -2;
+			}
 			p->opt_slla = opt;
 			break;
 		case ND_OPT_TARGET_LINKADDR:
+			if (p->opt_tlla) {
+				log_warn("%s: Error parsing ICMPv6 ND options. Multiple target link addresses. Packet dump: %s",
+					 p->ifc->name, base64_encode_packet(p));
+				return -2;
+			}
 			p->opt_tlla = opt;
 			break;
 		default:
