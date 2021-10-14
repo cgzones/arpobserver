@@ -732,9 +732,9 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 
 #ifdef NDEBUG
-	log_info("Starting %s..", MAIN_ARGV0);
+	log_info("Starting %s v%s..", MAIN_ARGV0, VERSION);
 #else
-	log_info("Starting %s (asserts enabled)..", MAIN_ARGV0);
+	log_info("Starting %s v%s (asserts enabled)..", MAIN_ARGV0, VERSION);
 #endif
 
 	/* main loop */

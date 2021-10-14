@@ -554,9 +554,9 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 
 #ifdef NDEBUG
-	log_info("Starting %s", CHECK_ARGV0);
+	log_info("Starting %s v%s..", CHECK_ARGV0, VERSION);
 #else
-	log_info("Starting %s (asserts enabled)", CHECK_ARGV0);
+	log_info("Starting %s v%s (asserts enabled)..", CHECK_ARGV0, VERSION);
 #endif
 
 	rc = main_loop(process_entry, &stop_loop, current_state);
