@@ -97,25 +97,33 @@ static void pcap_callback(const struct iface_config *ifc, const struct pcap_pkth
 	p.pcap_header = header;
 
 	rc = parse_packet(&p);
-
 	if (rc < 0)
 		return;
 
-	if (p.arp) {
+	switch (p.kind) {
+	case KIND_ARP:
 		if (!check_arp(&p))
 			process_arp(&p);
-	} else if (p.ns) {
-		if (!check_ns(&p))
-			process_ns(&p);
-	} else if (p.na) {
+		break;
+	case KIND_NA:
 		if (!check_na(&p))
 			process_na(&p);
-	} else if (p.ra) {
+		break;
+	case KIND_NS:
+		if (!check_ns(&p))
+			process_ns(&p);
+		break;
+	case KIND_RA:
 		if (!check_ra(&p))
 			process_ra(&p);
-	} else if (p.rs) {
+		break;
+	case KIND_RS:
 		if (!check_rs(&p))
 			process_rs(&p);
+		break;
+	default:
+		log_error("Invalid parsed packet type: %d\n", p.kind);
+		break;
 	}
 }
 

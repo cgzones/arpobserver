@@ -1,6 +1,7 @@
 #pragma once
 
-#include "common.h"
+#include "macro.h"
+#include "packet.h"
 
 int check_arp(const struct pkt *p) _nonnull_ _wur_;
 int check_ns(const struct pkt *p) _nonnull_ _wur_;

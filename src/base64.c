@@ -5,6 +5,9 @@
 #include <string.h>
 #include <strings.h>
 
+#include "common.h"
+
+
 static const char *const b64_map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static char pkt_buffer[SNAP_LEN * 4 / 3 + 3];
 

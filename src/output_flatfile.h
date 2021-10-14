@@ -1,6 +1,7 @@
 #pragma once
 
-#include "common.h"
+#include "macro.h"
+#include "packet.h"
 
 int output_flatfile_init(void) _wur_;
 int output_flatfile_reload(void) _wur_;

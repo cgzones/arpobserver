@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <errno.h>
 
+#include "packet.h"
+
+
 const char *const pkt_origin_str[] = {"ARP_REQ", "ARP_REP", "ARP_ACD", "ND_NS", "ND_NA", "ND_DAD", "ND_RA", "ND_RS", NULL};
 
 const char *const pkt_origin_desc[] = {[ARP_REQ] = "ARP Request packet",

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "common.h"
+#include "macro.h"
+#include "packet.h"
 
 int output_sqlite_init(void) _wur_;
 int output_sqlite_reload(void) _wur_;

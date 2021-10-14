@@ -5,6 +5,7 @@
 
 #include "cleanup.h"
 #include "common.h"
+#include "packet.h"
 
 
 struct ip_node {

@@ -129,10 +129,10 @@ _access_ro_(1) _access_roc_(2, 3) static uint16_t pkt_hash(const uint8_t *l2_add
 	assert(ip_addr);
 
 	for (unsigned int i = 0; i < 6; i += 2)
-		sum = sum ^ *(const uint16_t *)(l2_addr + i);
+		sum = sum ^ *(const uint16_t *)(const void *)(l2_addr + i);
 
 	for (unsigned int i = 0; i < len; i += 2)
-		sum = sum ^ *(const uint16_t *)(ip_addr + i);
+		sum = sum ^ *(const uint16_t *)(const void *)(ip_addr + i);
 
 	sum = sum ^ vlan_tag;
 

@@ -13,8 +13,6 @@ struct vlan_header {
 
 _nonnull_ _wur_ static int parse_arp(struct pkt *p)
 {
-	const struct ether_arp *arp;
-
 	assert(p);
 
 	if (p->len < sizeof(struct ether_arp)) {
@@ -23,18 +21,18 @@ _nonnull_ _wur_ static int parse_arp(struct pkt *p)
 		return -2;
 	}
 
-	arp = (const struct ether_arp *)p->pos;
-	p->arp = arp;
+	memcpy(&p->arp, p->pos, sizeof(struct ether_arp));
+	p->kind = KIND_ARP;
 	p->pos += sizeof(struct ether_arp);
 	p->len -= sizeof(struct ether_arp);
 
-	if (be16toh(arp->arp_hrd) != ARPHRD_ETHER) {
-		log_notice("%s: Ignoring ARP packet with hardware address format %d", p->ifc->name, be16toh(arp->arp_hrd));
+	if (be16toh(p->arp.arp_hrd) != ARPHRD_ETHER) {
+		log_notice("%s: Ignoring ARP packet with hardware address format %d", p->ifc->name, be16toh(p->arp.arp_hrd));
 		return -1;
 	}
 
-	if (be16toh(arp->arp_pro) != ETHERTYPE_IP) {
-		log_notice("%s: Ignoring ARP packet with protocol address format %d", p->ifc->name, be16toh(arp->arp_pro));
+	if (be16toh(p->arp.arp_pro) != ETHERTYPE_IP) {
+		log_notice("%s: Ignoring ARP packet with protocol address format %d", p->ifc->name, be16toh(p->arp.arp_pro));
 		return -1;
 	}
 
@@ -45,40 +43,44 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 {
 	assert(p);
 
-	if (p->icmp6->icmp6_type == ND_NEIGHBOR_SOLICIT) {
+	if (p->icmp6.icmp6_type == ND_NEIGHBOR_SOLICIT) {
 		if (p->len < sizeof(struct nd_neighbor_solicit)) {
 			log_warn("%s: Error parsing ICMPv6 ND_NS packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
 				 p->ifc->name, p->len, sizeof(struct nd_neighbor_solicit), base64_encode_packet(p));
 			return -2;
 		}
-		p->ns = (const struct nd_neighbor_solicit *)p->pos;
+		memcpy(&p->ns, p->pos, sizeof(struct nd_neighbor_solicit));
+		p->kind = KIND_NS;
 		p->pos += sizeof(struct nd_neighbor_solicit);
 		p->len -= sizeof(struct nd_neighbor_solicit);
-	} else if (p->icmp6->icmp6_type == ND_NEIGHBOR_ADVERT) {
+	} else if (p->icmp6.icmp6_type == ND_NEIGHBOR_ADVERT) {
 		if (p->len < sizeof(struct nd_neighbor_advert)) {
 			log_warn("%s: Error parsing ICMPv6 ND_NA packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
 				 p->ifc->name, p->len, sizeof(struct nd_neighbor_advert), base64_encode_packet(p));
 			return -2;
 		}
-		p->na = (const struct nd_neighbor_advert *)p->pos;
+		memcpy(&p->na, p->pos, sizeof(struct nd_neighbor_advert));
+		p->kind = KIND_NA;
 		p->pos += sizeof(struct nd_neighbor_advert);
 		p->len -= sizeof(struct nd_neighbor_advert);
-	} else if (p->icmp6->icmp6_type == ND_ROUTER_ADVERT) {
+	} else if (p->icmp6.icmp6_type == ND_ROUTER_ADVERT) {
 		if (p->len < sizeof(struct nd_router_advert)) {
 			log_warn("%s: Error parsing ICMPv6 ND_RA packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
 				 p->ifc->name, p->len, sizeof(struct nd_router_advert), base64_encode_packet(p));
 			return -2;
 		}
-		p->ra = (const struct nd_router_advert *)p->pos;
+		memcpy(&p->ra, p->pos, sizeof(struct nd_router_advert));
+		p->kind = KIND_RA;
 		p->pos += sizeof(struct nd_router_advert);
 		p->len -= sizeof(struct nd_router_advert);
-	} else if (p->icmp6->icmp6_type == ND_ROUTER_SOLICIT) {
+	} else if (p->icmp6.icmp6_type == ND_ROUTER_SOLICIT) {
 		if (p->len < sizeof(struct nd_router_solicit)) {
 			log_warn("%s: Error parsing ICMPv6 ND_RS packet. Packet is too small (%zu of %zu bytes). Packet dump: %s",
 				 p->ifc->name, p->len, sizeof(struct nd_router_solicit), base64_encode_packet(p));
 			return -2;
 		}
-		p->rs = (const struct nd_router_solicit *)p->pos;
+		memcpy(&p->rs, p->pos, sizeof(struct nd_router_solicit));
+		p->kind = KIND_RS;
 		p->pos += sizeof(struct nd_router_solicit);
 		p->len -= sizeof(struct nd_router_solicit);
 	} else {
@@ -137,8 +139,6 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 
 _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 {
-	const struct ip6_hdr *ip6;
-	const struct icmp6_hdr *icmp6;
 	uint16_t payload_len;
 
 	assert(p);
@@ -149,12 +149,11 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 		return -2;
 	}
 
-	ip6 = (const struct ip6_hdr *)p->pos;
-	p->ip6 = ip6;
+	memcpy(&p->ip6, p->pos, sizeof(struct ip6_hdr));
 	p->pos += sizeof(struct ip6_hdr);
 	p->len -= sizeof(struct ip6_hdr);
 
-	payload_len = be16toh(ip6->ip6_plen);
+	payload_len = be16toh(p->ip6.ip6_plen);
 	if (payload_len != p->len) {
 		log_warn("%s: Error parsing IPv6 packet. Payload length mismatch(%zu vs %u bytes). Packet dump: %s", p->ifc->name, p->len,
 			 payload_len, base64_encode_packet(p));
@@ -162,7 +161,7 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	}
 
 	// Skip IPv6 extension headers
-	for (uint8_t next_header = ip6->ip6_nxt; next_header != IPPROTO_ICMPV6;) {
+	for (uint8_t next_header = p->ip6.ip6_nxt; next_header != IPPROTO_ICMPV6;) {
 		switch (next_header) {
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_ROUTING:
@@ -201,27 +200,26 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 		return -2;
 	}
 
-	icmp6 = (const struct icmp6_hdr *)p->pos;
-	p->icmp6 = icmp6;
+	memcpy(&p->icmp6, p->pos, sizeof(struct icmp6_hdr));
 
 	/* Windows 10 sends ICMPv6 packets with invalid checksum and type 58. */
-	if (icmp6->icmp6_type == IPPROTO_ICMPV6) {
+	if (p->icmp6.icmp6_type == IPPROTO_ICMPV6) {
 		log_debug("%s: Ignoring invalid IPv6 ICMPv6 packet with type %d and code %d. Packet dump: %s", p->ifc->name,
-			  icmp6->icmp6_type, icmp6->icmp6_code, base64_encode_packet(p));
+			  p->icmp6.icmp6_type, p->icmp6.icmp6_code, base64_encode_packet(p));
 		return -1;
 	}
 
 	{
-		const uint16_t packet_checksum = be16toh(icmp6->icmp6_cksum);
+		const uint16_t packet_checksum = be16toh(p->icmp6.icmp6_cksum);
 		uint32_t checksum = 0;
 
 		/* IPv6 Source Address */
 		for (size_t i = 0; i < sizeof(struct in6_addr) / 2; i++)
-			checksum += be16toh(*(((const uint16_t *)&ip6->ip6_src) + i));
+			checksum += be16toh(*(((const uint16_t *)&p->ip6.ip6_src) + i));
 
 		/* IPv6 Destination Address */
 		for (size_t i = 0; i < sizeof(struct in6_addr) / 2; i++)
-			checksum += be16toh(*(((const uint16_t *)&ip6->ip6_dst) + i));
+			checksum += be16toh(*(((const uint16_t *)&p->ip6.ip6_dst) + i));
 
 		/* Upper-Layer Packet Length */
 		checksum += (uint32_t)p->len;
@@ -231,12 +229,16 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 
 		/* ICMPv6 data */
 		{
-			const uint16_t *ptr = (const uint16_t *)p->pos;
+			const uint8_t *ptr = p->pos;
 			size_t i = p->len;
-			for (; i > 1; i -= 2)
-				checksum += be16toh(*ptr++);
+			for (; i > 1; i -= 2) {
+				uint16_t d;
+				memcpy(&d, ptr, sizeof(uint16_t));
+				ptr += sizeof(uint16_t);
+				checksum += be16toh(d);
+			}
 			if (i > 0)
-				checksum += be16toh(*((const uint8_t *)ptr));
+				checksum += be16toh(*ptr);
 		}
 
 		/* Checksum is set empty for calculation */
@@ -254,7 +256,7 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 		}
 	}
 
-	switch (icmp6->icmp6_type) {
+	switch (p->icmp6.icmp6_type) {
 	case ND_NEIGHBOR_SOLICIT:
 	case ND_NEIGHBOR_ADVERT:
 	case ND_ROUTER_ADVERT:
@@ -267,8 +269,8 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 	case 143:                 /* Multicast Listener Discovery Version 2 (MLDv2) for IPv6 */
 		return -1;
 	default:
-		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d. Packet dump: %s", p->ifc->name, icmp6->icmp6_type,
-			   icmp6->icmp6_code, base64_encode_packet(p));
+		log_notice("%s: Ignoring unknown IPv6 ICMP6 type %d with code %d. Packet dump: %s", p->ifc->name, p->icmp6.icmp6_type,
+			   p->icmp6.icmp6_code, base64_encode_packet(p));
 		return -1;
 	}
 }
@@ -291,15 +293,16 @@ int parse_packet(struct pkt *p)
 		return -2;
 	}
 
-	p->ether = (const struct ether_header *)p->pos;
+	memcpy(&p->ether, p->pos, sizeof(struct ether_header));
 	p->pos += sizeof(struct ether_header);
 	p->len -= sizeof(struct ether_header);
 
-	ether_type = be16toh(p->ether->ether_type);
+	ether_type = be16toh(p->ether.ether_type);
 	if (ether_type == ETH_P_8021AD) {
 		p->pos += sizeof(struct vlan_header);
 		p->len -= sizeof(struct vlan_header);
-		ether_type = be16toh(*(const uint16_t *)(p->pos - 2));
+		memcpy(&ether_type, p->pos - 2, sizeof(uint16_t));
+		ether_type = be16toh(ether_type);
 		if (ether_type != ETHERTYPE_VLAN) {
 			log_warn(
 				"%s: Error parsing Ethernet packet. Double tagged VLAN header followed by header with type %d (expected %d). Packet dump: %s",
@@ -313,7 +316,8 @@ int parse_packet(struct pkt *p)
 		p->vlan_tag = be16toh(vlanh->tci & 0xfff);
 		p->pos += sizeof(struct vlan_header);
 		p->len -= sizeof(struct vlan_header);
-		ether_type = be16toh(*(const uint16_t *)(p->pos - 2));
+		memcpy(&ether_type, p->pos - 2, sizeof(uint16_t));
+		ether_type = be16toh(ether_type);
 	}
 
 	switch (ether_type) {

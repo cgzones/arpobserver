@@ -1,6 +1,7 @@
 #pragma once
 
-#include "common.h"
+#include "macro.h"
+#include "packet.h"
 
 int output_shm_init(void) _wur_;
 int output_shm_reload(void) _wur_;

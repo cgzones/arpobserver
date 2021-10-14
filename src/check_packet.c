@@ -18,8 +18,9 @@ int check_arp(const struct pkt *p)
 	const struct ether_arp *arp;
 
 	assert(p);
+	assert(p->kind == KIND_ARP);
 
-	arp = p->arp;
+	arp = &p->arp;
 
 	if (arp->arp_hln != ETHER_ADDR_LEN) {
 		log_warn("%s: Malformed ARP packet. Wrong hardware size (got %d, expected %d). Packet dump: %s", p->ifc->name, arp->arp_hln,
@@ -37,18 +38,18 @@ int check_arp(const struct pkt *p)
 	// frame but virtual MAC address in ARP sender address field. In
 	// networks where MS NLB is used it produces bunch of warnings.
 
-	if (memcmp(p->ether->ether_shost, arp->arp_sha, ETHER_ADDR_LEN) != 0) {
+	if (memcmp(p->ether.ether_shost, arp->arp_sha, ETHER_ADDR_LEN) != 0) {
 		char mac_ether[MAC_STR_LEN];
 		char mac_arp[MAC_STR_LEN];
 		char ip_arp[INET_ADDRSTRLEN];
 		uint16_t opcode = be16toh(arp->arp_op);
 
-		convert_mac_addr_to_str(p->ether->ether_shost, mac_ether);
+		convert_mac_addr_to_str(p->ether.ether_shost, mac_ether);
 		convert_mac_addr_to_str(arp->arp_sha, mac_arp);
 		if (convert_ip4_addr_to_str(arp->arp_spa, ip_arp) < 0)
 			snprintf(ip_arp, sizeof(ip_arp), CONVERSION_FAILURE_STR);
 
-		if (opcode != 1 || !arpbridgelist_contains(p->ether->ether_shost)) {
+		if (opcode != 1 || !arpbridgelist_contains(p->ether.ether_shost)) {
 			log_warn(
 				"%s: Malformed ARP packet with opcode %d. Ethernet and ARP source address mismatch (%s != %s) [%s]. Packet dump: %s",
 				p->ifc->name, opcode, mac_ether, mac_arp, ip_arp, base64_encode_packet(p));
@@ -70,9 +71,10 @@ int check_ns(const struct pkt *p)
 	char ip6_addr2[INET6_ADDRSTRLEN];
 
 	assert(p);
+	assert(p->kind == KIND_NS);
 
-	ns = p->ns;
-	ip6 = p->ip6;
+	ns = &p->ns;
+	ip6 = &p->ip6;
 
 	if (ip6->ip6_hlim != 255) {
 		log_warn("%s: Malformed ICMPv6 NS packet. Wrong IPv6 Hop Limit (got %d, expected %d). Packet dump: %s", p->ifc->name,
@@ -80,9 +82,9 @@ int check_ns(const struct pkt *p)
 		return -1;
 	}
 
-	if (p->icmp6->icmp6_code != 0) {
+	if (p->icmp6.icmp6_code != 0) {
 		log_warn("%s: Malformed ICMPv6 NS packet. Wrong ICMPv6 Code (got %d, expected %d). Packet dump: %s", p->ifc->name,
-			 p->icmp6->icmp6_code, 0, base64_encode_packet(p));
+			 p->icmp6.icmp6_code, 0, base64_encode_packet(p));
 		return -1;
 	}
 
@@ -122,9 +124,10 @@ int check_na(const struct pkt *p)
 	const struct ip6_hdr *ip6;
 
 	assert(p);
+	assert(p->kind == KIND_NA);
 
-	na = p->na;
-	ip6 = p->ip6;
+	na = &p->na;
+	ip6 = &p->ip6;
 
 	if (ip6->ip6_hlim != 255) {
 		log_warn("%s: Malformed ICMPv6 NA packet. Wrong IPv6 Hop Limit (got %d, expected %d). Packet dump: %s", p->ifc->name,
@@ -132,9 +135,9 @@ int check_na(const struct pkt *p)
 		return -1;
 	}
 
-	if (p->icmp6->icmp6_code != 0) {
+	if (p->icmp6.icmp6_code != 0) {
 		log_warn("%s: Malformed ICMPv6 NA packet. Wrong ICMPv6 Code (got %d, expected %d). Packet dump: %s", p->ifc->name,
-			 p->icmp6->icmp6_code, 0, base64_encode_packet(p));
+			 p->icmp6.icmp6_code, 0, base64_encode_packet(p));
 		return -1;
 	}
 
@@ -163,9 +166,10 @@ int check_ra(const struct pkt *p)
 	const struct ip6_hdr *ip6;
 
 	assert(p);
+	assert(p->kind == KIND_RA);
 
 	// ra = p->ra;
-	ip6 = p->ip6;
+	ip6 = &p->ip6;
 
 	if (ip6->ip6_hlim != 255) {
 		log_warn("%s: Malformed ICMPv6 RA packet. Wrong IPv6 Hop Limit (got %d, expected %d). Packet dump: %s", p->ifc->name,
@@ -173,9 +177,9 @@ int check_ra(const struct pkt *p)
 		return -1;
 	}
 
-	if (p->icmp6->icmp6_code != 0) {
+	if (p->icmp6.icmp6_code != 0) {
 		log_warn("%s: Malformed ICMPv6 RA packet. Wrong ICMPv6 Code (got %d, expected %d). Packet dump: %s", p->ifc->name,
-			 p->icmp6->icmp6_code, 0, base64_encode_packet(p));
+			 p->icmp6.icmp6_code, 0, base64_encode_packet(p));
 		return -1;
 	}
 
@@ -201,9 +205,10 @@ int check_rs(const struct pkt *p)
 	const struct ip6_hdr *ip6;
 
 	assert(p);
+	assert(p->kind == KIND_RS);
 
 	// rs = p->rs;
-	ip6 = p->ip6;
+	ip6 = &p->ip6;
 
 	if (ip6->ip6_hlim != 255) {
 		log_warn("%s: Malformed ICMPv6 RS packet. Wrong IPv6 Hop Limit (got %d, expected %d). Packet dump: %s", p->ifc->name,
@@ -211,9 +216,9 @@ int check_rs(const struct pkt *p)
 		return -1;
 	}
 
-	if (p->icmp6->icmp6_code != 0) {
+	if (p->icmp6.icmp6_code != 0) {
 		log_warn("%s: Malformed ICMPv6 RS packet. Wrong ICMPv6 Code (got %d, expected %d). Packet dump: %s", p->ifc->name,
-			 p->icmp6->icmp6_code, 0, base64_encode_packet(p));
+			 p->icmp6.icmp6_code, 0, base64_encode_packet(p));
 		return -1;
 	}
 
