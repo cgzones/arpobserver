@@ -46,9 +46,18 @@ static int drop_root(const char *uname)
 	assert(uname);
 
 	pw = getpwnam(uname);
+	if (!pw) {
+		char *endptr;
+		unsigned long res;
 
-	if (!pw)
-		return log_error("User '%s' not found: %m", uname);
+		errno = 0;
+		res = strtoul(uname, &endptr, 10);
+		if (res < INT_MAX && errno == 0 && *endptr == '\0')
+			pw = getpwuid((uid_t)res);
+
+		if (!pw)
+			return log_error("User '%s' not found: %m", uname);
+	}
 
 	if (initgroups(uname, pw->pw_gid) < 0)
 		return log_error("Cannot set initial groups of user '%s' and gid %d: %m", uname, pw->pw_gid);
@@ -60,10 +69,10 @@ static int drop_root(const char *uname)
 		return log_error("Cannot switch user id to %d: %m", pw->pw_uid);
 
 	if (setuid(0) != -1)
-		return log_errno_error(EEXIST, "Failed to switch to user '%s' (uid=%d, gid=%d) permanently; able to switch back!", uname,
-				       pw->pw_uid, pw->pw_gid);
+		return log_errno_error(EEXIST, "Failed to switch to user '%s' (uid=%d, gid=%d) permanently; able to switch back!",
+				       pw->pw_name ?: uname, pw->pw_uid, pw->pw_gid);
 
-	log_debug("Changed user to '%s', uid = %d, gid = %d", uname, pw->pw_uid, pw->pw_gid);
+	log_info("Changed user to '%s', uid = %d, gid = %d", pw->pw_name ?: uname, pw->pw_uid, pw->pw_gid);
 
 	return 0;
 }
