@@ -40,7 +40,7 @@ struct ctx_s {
 	} bind_data;
 };
 
-static const char *const sql_create_log_template = "\
+#define sql_create_log_template "\
 CREATE TABLE IF NOT EXISTS `%slog` (\
 	`tstamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\
 	`hostname` varchar(" STR(HOSTNAME_LEN) ") NOT NULL DEFAULT \"localhost\",\
@@ -54,18 +54,18 @@ CREATE TABLE IF NOT EXISTS `%slog` (\
 	KEY `vlan_tag` (`vlan_tag`),\
 	KEY `mac_address` (`mac_address`),\
 	KEY `interface_vlan_tag` (`interface`,`vlan_tag`)\
-)";
+)"
 
-static const char *const sql_create_origin_template = "\
+#define sql_create_origin_template "\
 CREATE TABLE IF NOT EXISTS `%sorigin` (\
 	`id` INT(11) NOT NULL,\
 	`name` VARCHAR(16) NOT NULL,\
 	`description` VARCHAR(255) NOT NULL,\
 \
 	PRIMARY KEY (`id`)\
-)";
+)"
 
-static const char *const sql_create_plaintext_template = "\
+#define sql_create_plaintext_template "\
 CREATE OR REPLACE VIEW `%slog_plaintext` AS \
 SELECT \
 	l.`tstamp`, \
@@ -77,23 +77,23 @@ SELECT \
 	o.`name` AS `origin` \
 FROM `%slog` AS l \
 INNER JOIN `%sorigin` as o \
-	ON o.`id` = l.`origin_id`";
+	ON o.`id` = l.`origin_id`"
 
-static const char *const sql_insert_log_template = "\
+#define sql_insert_log_template "\
 INSERT INTO `%slog` (\
 	`tstamp`, `hostname`, `interface`, `vlan_tag`, `mac_address`, `ip_address`, `origin_id`\
 ) \
 VALUES(\
 	FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?\
-)";
+)"
 
-static const char *const sql_insert_origin_template = "\
+#define sql_insert_origin_template "\
 INSERT INTO `%sorigin` (\
 	`id`, `name`, `description`\
 ) \
 VALUES(\
 	%u, '%s', '%s'\
-)";
+)"
 
 
 __attribute__((format(printf, 2, 3))) static int mysql_simple_query(MYSQL *dbh, const char *format, ...)
