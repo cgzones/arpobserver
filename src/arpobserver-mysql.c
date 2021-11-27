@@ -40,34 +40,30 @@ struct ctx_s {
 	} bind_data;
 };
 
-#define sql_create_log_template "\
-CREATE TABLE IF NOT EXISTS `%slog` (\
-	`tstamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\
-	`hostname` varchar(" STR(HOSTNAME_LEN) ") NOT NULL DEFAULT \"localhost\",\
-	`interface` varchar(16) NOT NULL,\
-	`vlan_tag` int(11) NOT NULL DEFAULT 0,\
-	`mac_address` BINARY(6) NOT NULL,\
-	`ip_address` VARBINARY(16) NOT NULL,\
-	`origin_id` INT(11) NOT NULL,\
-\
-	KEY `interface` (`interface`),\
-	KEY `vlan_tag` (`vlan_tag`),\
-	KEY `mac_address` (`mac_address`),\
-	KEY `interface_vlan_tag` (`interface`,`vlan_tag`)\
-)"
+#define sql_create_log_template \
+	"CREATE TABLE IF NOT EXISTS `%slog` ( \
+	`tstamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, \
+	`hostname` varchar(" STR(HOSTNAME_LEN) ") NOT NULL DEFAULT \"localhost\", \
+	`interface` varchar(16) NOT NULL, \
+	`vlan_tag` int(11) NOT NULL DEFAULT 0, \
+	`mac_address` BINARY(6) NOT NULL, \
+	`ip_address` VARBINARY(16) NOT NULL, \
+	`origin_id` INT(11) NOT NULL, \
+	KEY `interface` (`interface`), \
+	KEY `vlan_tag` (`vlan_tag`), \
+	KEY `mac_address` (`mac_address`), \
+	KEY `interface_vlan_tag` (`interface`,`vlan_tag`))"
 
-#define sql_create_origin_template "\
-CREATE TABLE IF NOT EXISTS `%sorigin` (\
-	`id` INT(11) NOT NULL,\
-	`name` VARCHAR(16) NOT NULL,\
-	`description` VARCHAR(255) NOT NULL,\
-\
-	PRIMARY KEY (`id`)\
-)"
+#define sql_create_origin_template \
+	"CREATE TABLE IF NOT EXISTS `%sorigin` ( \
+	`id` INT(11) NOT NULL, \
+	`name` VARCHAR(16) NOT NULL, \
+	`description` VARCHAR(255) NOT NULL, \
+	PRIMARY KEY (`id`))"
 
-#define sql_create_plaintext_template "\
-CREATE OR REPLACE VIEW `%slog_plaintext` AS \
-SELECT \
+#define sql_create_plaintext_template \
+	"CREATE OR REPLACE VIEW `%slog_plaintext` AS \
+	SELECT \
 	l.`tstamp`, \
 	l.`hostname`, \
 	l.`interface`, \
@@ -75,25 +71,22 @@ SELECT \
 	HEX(l.`mac_address`) AS `mac_address`, \
 	HEX(l.`ip_address`) AS `ip_address`, \
 	o.`name` AS `origin` \
-FROM `%slog` AS l \
-INNER JOIN `%sorigin` as o \
+	FROM `%slog` AS l \
+	INNER JOIN `%sorigin` as o \
 	ON o.`id` = l.`origin_id`"
 
-#define sql_insert_log_template "\
-INSERT INTO `%slog` (\
-	`tstamp`, `hostname`, `interface`, `vlan_tag`, `mac_address`, `ip_address`, `origin_id`\
-) \
-VALUES(\
-	FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?\
-)"
+#define sql_insert_log_template \
+	"INSERT INTO `%slog` ( \
+	`tstamp`, `hostname`, `interface`, `vlan_tag`, `mac_address`, `ip_address`, `origin_id`) \
+	VALUES( \
+	FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?)"
 
-#define sql_insert_origin_template "\
-INSERT INTO `%sorigin` (\
-	`id`, `name`, `description`\
-) \
-VALUES(\
-	%u, '%s', '%s'\
-)"
+#define sql_insert_origin_template \
+	"INSERT INTO `%sorigin` ( \
+	`id`, `name`, `description` \
+	) \
+	VALUES( \
+	%u, '%s', '%s')"
 
 
 __attribute__((format(printf, 2, 3))) static int mysql_simple_query(MYSQL *dbh, const char *format, ...)
