@@ -46,8 +46,11 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y asciidoctor check
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@bcd7e6896fd183906513908bcc690ef5a3345f1c
+    - name: Setup
+      run: meson setup build
+
+    - name: Build
+      run: meson compile -C build/
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@bcd7e6896fd183906513908bcc690ef5a3345f1c
