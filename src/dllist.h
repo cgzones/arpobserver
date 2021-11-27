@@ -6,7 +6,8 @@
 #include "cleanup.h"
 #include "macro.h"
 
-struct dllist_entry {
+struct dllist_entry
+{
 	void *data;
 	struct dllist_entry *next;
 	struct dllist_entry *prev;
@@ -14,7 +15,8 @@ struct dllist_entry {
 
 typedef void (*entry_data_free_t)(void *data);
 
-struct dllist_head {
+struct dllist_head
+{
 	struct dllist_entry *first;
 	struct dllist_entry *last;
 	size_t size;

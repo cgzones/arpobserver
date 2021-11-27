@@ -32,7 +32,7 @@ BraceWrapping:
   BeforeElse: false
   BeforeWhile: false
 BreakBeforeBinaryOperators: NonAssignment
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Mozilla
 BreakBeforeTernaryOperators: true
 BreakStringLiterals: false
 ColumnLimit: 140

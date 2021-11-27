@@ -19,13 +19,15 @@
 #define HOSTNAME_LEN 255
 
 
-struct ctx_s {
+struct ctx_s
+{
 	const char *config_file;
 	const char *prefix;
 	MYSQL *dbh;
 	MYSQL_STMT *stmt;
 	MYSQL_BIND bind[7];
-	struct {
+	struct
+	{
 		long long int timestamp;
 		char hostname[HOSTNAME_LEN];
 		unsigned long hostname_len;

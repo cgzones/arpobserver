@@ -12,7 +12,8 @@
 #include "output_sqlite.h"
 
 
-struct mac_list_node {
+struct mac_list_node
+{
 	uint8_t addr[ETHER_ADDR_LEN];
 	struct mac_list_node *next;
 };

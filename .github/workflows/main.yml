@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CC: clang-13
-      CFLAGS: '-O2 -flto -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-cast-align'
+      CFLAGS: '-O2 -flto -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-reserved-macro-identifier -Wno-reserved-identifier -Wno-error=covered-switch-default'
     steps:
     - uses: actions/checkout@v2
     - name: install clang repo

@@ -6,7 +6,8 @@
 #include <stdlib.h>
 #include <syslog.h>
 
-struct log_ctx_s {
+struct log_ctx_s
+{
 	enum log_mode mode;
 	int max_priority;
 	const char *ident;

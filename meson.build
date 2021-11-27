@@ -2,7 +2,7 @@ project('arpobserver', 'c',
         version : '0.1',
         license : 'GPL-3.0',
         default_options: [
-           'c_std=gnu99',
+           'c_std=gnu11',
            'prefix=/usr',
            'sysconfdir=/etc',
            'localstatedir=/var',

@@ -20,7 +20,8 @@
 #include <sys/socket.h>
 #include <time.h>
 
-struct iface_config {
+struct iface_config
+{
 	char *name;
 	struct event *event;
 
@@ -49,7 +50,8 @@ static inline void free_iface_config(struct iface_config *p)
 DEFINE_TRIVIAL_CLEANUP_FUNC(struct iface_config *, free_iface_config);
 #define _cleanup_iface_config_ _cleanup_(free_iface_configp)
 
-struct arpobserver_config {
+struct arpobserver_config
+{
 	int ratelimit;
 	unsigned hashsize;
 
@@ -64,7 +66,8 @@ struct arpobserver_config {
 	const char *pid_file;
 	const char *data_file;
 
-	struct {
+	struct
+	{
 		struct shm_log *log;
 		char *filename;
 		uint64_t size;

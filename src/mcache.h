@@ -6,7 +6,8 @@
 
 #include "common.h"
 
-struct mcache_node {
+struct mcache_node
+{
 	uint8_t l2_addr[ETHER_ADDR_LEN];
 	uint8_t ip_addr[IP6_LEN];
 	time_t tstamp;

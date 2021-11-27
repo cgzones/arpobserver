@@ -8,7 +8,8 @@
 #include "packet.h"
 
 
-struct ip_node {
+struct ip_node
+{
 	uint8_t ip_addr[IP6_LEN];
 	uint8_t addr_len;
 

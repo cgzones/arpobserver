@@ -11,7 +11,8 @@ int protect_ip(const char *ip_str) _nonnull_ _wur_;
 int protect_mac(const char *mac_str) _nonnull_ _wur_;
 int protect_mac_ip_pairing(const char *mac_ip_str) _nonnull_ _wur_;
 
-struct protect_entry {
+struct protect_entry
+{
 	uint8_t ip4_address[IP4_LEN];
 	uint8_t ip6_address[IP6_LEN];
 	uint8_t mac_address[ETHER_ADDR_LEN];

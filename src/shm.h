@@ -15,7 +15,8 @@
 #define WAIT_INTERVAL_SEC    1     // seconds
 
 /* NOTE: must not contain any pointers */
-struct shm_log_entry {
+struct shm_log_entry
+{
 	time_t timestamp;
 	char interface[IFNAMSIZ];
 	uint8_t ip_address[IP6_LEN];
@@ -26,7 +27,8 @@ struct shm_log_entry {
 };
 
 /* NOTE: must not contain any pointers */
-struct shm_log {
+struct shm_log
+{
 	uint64_t magic;
 	uint64_t size;
 	uint64_t last_idx;

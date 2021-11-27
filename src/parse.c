@@ -6,7 +6,8 @@
 #include "base64.h"
 #include "log.h"
 
-struct vlan_header {
+struct vlan_header
+{
 	uint16_t tpid;
 	uint16_t tci;
 } _packed_;

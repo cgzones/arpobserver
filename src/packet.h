@@ -28,7 +28,8 @@ enum pkt_origin
 	ND_RS,
 };
 
-struct pkt {
+struct pkt
+{
 	const uint8_t *raw_packet;
 
 	const uint8_t *pos;
@@ -44,7 +45,8 @@ struct pkt {
 	struct icmp6_hdr icmp6;
 
 	enum pkt_kind kind;
-	union {
+	union
+	{
 		struct ether_arp arp;
 		struct nd_neighbor_advert na;
 		struct nd_neighbor_solicit ns;
