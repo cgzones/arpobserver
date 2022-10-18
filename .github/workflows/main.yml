@@ -10,18 +10,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cc: [ 'gcc', 'clang-13' ]
+        cc: [ 'gcc', 'clang-15' ]
     env:
       CC: ${{ matrix.cc }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-13 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-13 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
+      run: sudo apt-get install -y clang-15 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
     - name: install asciidoctor, check and meson from Debian sid
       run: |
           wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
@@ -39,17 +39,17 @@ jobs:
     name: Clang Weverything Build
     runs-on: ubuntu-latest
     env:
-      CC: clang-13
+      CC: clang-15
       CFLAGS: '-O2 -flto -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-reserved-macro-identifier -Wno-reserved-identifier -Wno-error=covered-switch-default'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-13 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-13 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
+      run: sudo apt-get install -y clang-15 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
     - name: install asciidoctor, check and meson from Debian sid
       run: |
           wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: check-whitespaces
         run: git diff-tree --check $(git hash-object -t tree /dev/null) HEAD
 
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install codespell
         run: |
           wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
@@ -87,7 +87,7 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y codespell
       - name: run codespell
-        run: codespell -C2 -Lnd,objext,ether --skip .git
+        run: codespell -C2 -Lnd,objext,ether --skip .git,_typos.toml
 
   format_check:
     name: Format Check
@@ -95,15 +95,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install clang-format
         run: |
             wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-            sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-13 main' -y
+            sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main' -y
             sudo apt-get update -q
-            sudo apt-get install -y clang-format-13
+            sudo apt-get install -y clang-format-15
       - name: check format
-        run: clang-format-13 -i --Werror src/*.c src/*.h tests/*.c
+        run: clang-format-15 -i --Werror src/*.c src/*.h tests/*.c
       - name: check changes
         run: git diff --exit-code
 
@@ -113,7 +113,7 @@ jobs:
 #    runs-on: ubuntu-latest
 #
 #    steps:
-#      - uses: actions/checkout@v2
+#      - uses: actions/checkout@v3
 #      - name: install cppcheck
 #        run: sudo apt-get install -y cppcheck
 #      - name: cppcheck

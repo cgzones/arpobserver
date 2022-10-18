@@ -64,7 +64,7 @@ END_TEST
 
 START_TEST(test_two_pad2)
 {
-	const char *str = "Hello Worl";
+	const char *str = "HelloWorld";
 	const char *encoding = "SGVsbG8gV29ybA==";
 	char encode_buffer[256], decode_buffer[256];
 	size_t encode_size, decode_size;
