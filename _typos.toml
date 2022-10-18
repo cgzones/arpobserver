@@ -1,0 +1,5 @@
+[default.extend-identifiers]
+
+[default.extend-words]
+nd = "nd"
+checkd = "checkd"
