@@ -44,7 +44,9 @@ int output_flatfile_save(const struct pkt *p, const char *mac_str, const char *i
 
 	fprintf(data_fd, "%lu %s %u %s %s %s\n", p->pcap_header->ts.tv_sec, p->ifc->name, p->vlan_tag, mac_str, ip_str,
 		pkt_origin_str[p->origin]);
-	fflush(data_fd);
+
+	if (fflush(data_fd) != 0)
+		log_error("Failed to flush file '%s': %m", global_cfg.data_file);
 
 	return 0;
 }
@@ -54,6 +56,8 @@ void output_flatfile_close(void)
 	if (!data_fd)
 		return;
 
-	fclose(data_fd);
+	if (fclose(data_fd) != 0)
+		log_error("Failed to close file '%s': %m", global_cfg.data_file);
+
 	data_fd = NULL;
 }

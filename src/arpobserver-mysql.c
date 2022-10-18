@@ -95,13 +95,19 @@ __attribute__((format(printf, 2, 3))) static int mysql_simple_query(MYSQL *dbh, 
 {
 	va_list pvar;
 	char buf[BUFSIZ];
+	int r;
 
 	assert(dbh);
 	assert(format);
 
 	va_start(pvar, format);
-	vsnprintf(buf, sizeof(buf), format, pvar);
+	r = vsnprintf(buf, sizeof(buf), format, pvar);
 	va_end(pvar);
+
+	if (r < 0 || (size_t)r >= sizeof(buf)) {
+		log_error("Failed to format query '%s'", format);
+		return -1;
+	}
 
 	if (mysql_query(dbh, buf)) {
 		log_error("Error executing query: %s", mysql_error(dbh));
@@ -138,9 +144,8 @@ static int mysql_init_tables(MYSQL *dbh, const char *prefix)
 
 static int stmt_init(struct ctx_s *data)
 {
-	int r;
-	size_t len;
 	char *buf;
+	int r;
 
 	assert(data);
 
@@ -150,14 +155,11 @@ static int stmt_init(struct ctx_s *data)
 		return -1;
 	}
 
-	len = strlen(sql_insert_log_template) + strlen(data->prefix) + 1;
-	buf = malloc(len);
-	if (!buf)
+	r = asprintf(&buf, sql_insert_log_template, data->prefix);
+	if (r < 0)
 		return log_oom();
 
-	snprintf(buf, len, sql_insert_log_template, data->prefix);
-
-	r = mysql_stmt_prepare(data->stmt, buf, strnlen(buf, len));
+	r = mysql_stmt_prepare(data->stmt, buf, strlen(buf));
 	if (r) {
 		free(buf);
 		log_error("Error preparing MySQL statement object: %s", mysql_stmt_error(data->stmt));

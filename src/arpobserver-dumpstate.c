@@ -8,6 +8,7 @@
 #include "log.h"
 #include "shm.h"
 #include "statefile.h"
+#include "util.h"
 
 #define DUMP_ARGV0 "arpobserver-dumpstate"
 
@@ -106,7 +107,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	strftime(state_mtime_str, sizeof(state_mtime_str), "%Y-%m-%d %H:%M:%S %z", localtime_r(&statbuf.st_mtime, &timeresult));
+	a_strftime(state_mtime_str, sizeof(state_mtime_str), "%Y-%m-%d %H:%M:%S %z", localtime_r(&statbuf.st_mtime, &timeresult));
 	printf("State file last updated: %s\n", state_mtime_str);
 
 	return EXIT_SUCCESS;

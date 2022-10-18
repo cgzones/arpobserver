@@ -5,6 +5,7 @@
 
 #include "arpobserver.h"
 #include "log.h"
+#include "util.h"
 
 #ifdef HAVE_LIBSQLITE3
 static const char sqlite_create_template[] = "\
@@ -36,8 +37,8 @@ int output_sqlite_init(void)
 		return 0;
 	}
 
-	snprintf(create_query, sizeof(create_query), sqlite_create_template, tablename);
-	snprintf(insert_query, sizeof(insert_query), sqlite_insert_template, tablename);
+	a_snprintf(create_query, sizeof(create_query), sqlite_create_template, tablename);
+	a_snprintf(insert_query, sizeof(insert_query), sqlite_insert_template, tablename);
 
 	rc = sqlite3_open(global_cfg.sqlite_filename, &sqlite_conn);
 	if (rc) {

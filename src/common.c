@@ -4,6 +4,7 @@
 #include <errno.h>
 
 #include "packet.h"
+#include "util.h"
 
 
 const char *const pkt_origin_str[] = {"ARP_REQ", "ARP_REP", "ARP_ACD", "ND_NS", "ND_NA", "ND_DAD", "ND_RA", "ND_RS", NULL};
@@ -24,7 +25,7 @@ void convert_mac_addr_to_str(const uint8_t addr[ETHER_ADDR_LEN], char *str)
 	assert(addr);
 	assert(str);
 
-	snprintf(str, MAC_STR_LEN, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+	a_snprintf(str, MAC_STR_LEN, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
 
 int convert_mac_str_to_addr(const char *str, uint8_t addr[ETHER_ADDR_LEN])

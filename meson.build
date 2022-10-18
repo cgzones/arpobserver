@@ -45,6 +45,7 @@ dep_rt     = cc.find_library('rt', required : false)  # shm_open(3)
 
 
 compiler_arguments = [
+    '-D_GNU_SOURCE',
     '-Wcast-align',
     '-Wcast-align=strict',
     '-Wcast-qual',

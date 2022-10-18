@@ -105,7 +105,7 @@ void ignorelist_free(void)
 	ignorelist = NULL;
 }
 
-static const struct ip_node *ignorelist_match_ip(const uint8_t *ip_addr, uint8_t addr_len)
+_access_roc_(1, 2) static const struct ip_node *ignorelist_match_ip(const uint8_t *ip_addr, uint8_t addr_len)
 {
 	assert(ip_addr);
 

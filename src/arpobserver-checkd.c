@@ -46,7 +46,7 @@ static char *format_timestamp(char *buffer, size_t size, time_t time)
 	localtime_r(&time, &t);
 	rc = strftime(buffer, size, "%b %d %T", &t);
 	if (rc == 0)
-		snprintf(buffer, size, "<invalid>");
+		a_snprintf(buffer, size, "<invalid>");
 
 	return buffer;
 }
@@ -121,7 +121,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 				continue;
 			}
 
-			strftime(last_updated, sizeof(last_updated), "%Y-%m-%d %H:%M:%S %z", localtime_r(&data->timestamp, &timeresult));
+			a_strftime(last_updated, sizeof(last_updated), "%Y-%m-%d %H:%M:%S %z", localtime_r(&data->timestamp, &timeresult));
 
 			log_debug("  cache entry %3lu: %s %16s %18s %s", i, last_updated, data->interface, cur_mac_str, cur_ip_str);
 			i++;
@@ -140,7 +140,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		else
 			r = convert_ip6_addr_to_str(found_match->ip6_address, protected_ip_str);
 		if (r < 0)
-			snprintf(protected_ip_str, sizeof(protected_ip_str), CONVERSION_FAILURE_STR);
+			a_snprintf(protected_ip_str, sizeof(protected_ip_str), CONVERSION_FAILURE_STR);
 
 		log_warn("Event -- IF = [%s] & MAC = [%s] & IP = [%s] conflicts with protected entry: MAC = [%s] & IP = [%s]", e->interface,
 			 mac_str, ip_str, protected_mac_str, protected_ip_str);
@@ -192,7 +192,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 				char format_buffer[FMT_TIMESTAMP_SIZE];
 
 				if (convert_ip_addr_to_str(data->ip_address, data->ip_len, ip_str_del) < 0)
-					snprintf(ip_str_del, sizeof(ip_str_del), CONVERSION_FAILURE_STR);
+					a_snprintf(ip_str_del, sizeof(ip_str_del), CONVERSION_FAILURE_STR);
 
 				convert_mac_addr_to_str(data->mac_address, mac_str_del);
 
@@ -285,10 +285,10 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 			if (other_ip) {
 				if (convert_ip_addr_to_str(other_ip, other_ip_len, other_ip_str) < 0) {
 					log_warn("%s: Cannot convert IP address to textual form: %m", __func__);
-					snprintf(other_ip_str, sizeof(other_ip_str), "error");
+					a_snprintf(other_ip_str, sizeof(other_ip_str), "error");
 				}
 			} else
-				snprintf(other_ip_str, sizeof(other_ip_str), "none");
+				a_snprintf(other_ip_str, sizeof(other_ip_str), "none");
 
 			if (if_match) {
 				if (lease_time <= last_seen_time)
@@ -348,10 +348,10 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 		if (other_ip) {
 			if (convert_ip_addr_to_str(other_ip, other_ip_len, other_ip_str) < 0) {
 				log_warn("%s: Cannot convert IP address to textual form: %m", __func__);
-				snprintf(other_ip_str, sizeof(other_ip_str), "error");
+				a_snprintf(other_ip_str, sizeof(other_ip_str), "error");
 			}
 		} else
-			snprintf(other_ip_str, sizeof(other_ip_str), "none");
+			a_snprintf(other_ip_str, sizeof(other_ip_str), "none");
 
 		if (event_logged)
 			log_debug("Event -- added cache entry for IF = [%s] & MAC = [%s] & IP = [%s] (other IP [%s])", e->interface,

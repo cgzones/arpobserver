@@ -370,7 +370,9 @@ static void save_pid(void)
 	}
 
 	fprintf(f, "%d\n", getpid());
-	fclose(f);
+
+	if (fclose(f) != 0)
+		log_error("Failure during closing pid file '%s': %m", global_cfg.pid_file);
 }
 
 static void del_pid(void)
@@ -495,6 +497,10 @@ static int config_accept(const char *key, const char *value, size_t lineno)
 	}
 
 	if (string_eq("Sqlite3Table", key)) {
+		size_t len = strlen(value);
+		if (len >= 64)
+			return log_error("Invalid value '%s' (too long: %zu > 64) for option %s at line %zu.", value, len, key, lineno);
+
 		free(global_cfg.sqlite_tablename);
 		global_cfg.sqlite_tablename = strdup(value);
 		if (!global_cfg.sqlite_tablename)
