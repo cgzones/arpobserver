@@ -88,7 +88,7 @@ int _log_msg(int priority, int passed_errno, const char *format, ...)
 	return passed_errno != 0 ? -passed_errno : -EBADRQC;
 }
 
-void log_close()
+void log_close(void)
 {
 	closelog();
 }

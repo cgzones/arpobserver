@@ -51,7 +51,7 @@ bool arpbridgelist_contains(const uint8_t addr[ETHER_ADDR_LEN])
 	return false;
 }
 
-void arpbridgelist_free()
+void arpbridgelist_free(void)
 {
 	for (struct mac_list_node *n = arpbridgelist; n;) {
 		struct mac_list_node *next_node = n->next;
@@ -94,7 +94,7 @@ int ignorelist_add_ip(const char *ip_str)
 	return log_errno_warn(EINVAL, "Cannot ignore IP '%s': not a valid IPv4 or IPv6 address", ip_str);
 }
 
-void ignorelist_free()
+void ignorelist_free(void)
 {
 	for (struct ip_node *ip = ignorelist; ip;) {
 		struct ip_node *ip_next = ip->next;

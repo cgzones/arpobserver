@@ -13,7 +13,7 @@
 #include "shm.h"
 #include "util.h"
 
-int output_shm_init()
+int output_shm_init(void)
 {
 	_cleanup_close_ int fd = -1;
 	const char *shm_filename = global_cfg.shm_data.filename ?: DEFAULT_SHM_LOG_NAME;
@@ -58,7 +58,7 @@ int output_shm_init()
 	return 0;
 }
 
-int output_shm_reload()
+int output_shm_reload(void)
 {
 	return 0;
 }
@@ -99,7 +99,7 @@ int output_shm_save(const struct pkt *p, const char *mac_str, const char *ip_str
 	return 0;
 }
 
-int output_shm_timeout()
+int output_shm_timeout(void)
 {
 	struct shm_log *log;
 	struct shm_log_entry *e;
@@ -125,7 +125,7 @@ int output_shm_timeout()
 	return 0;
 }
 
-void output_shm_close()
+void output_shm_close(void)
 {
 	const size_t mem_size = sizeof(struct shm_log) + sizeof(struct shm_log_entry) * global_cfg.shm_data.size;
 	const char *shm_filename = global_cfg.shm_data.filename ?: DEFAULT_SHM_LOG_NAME;

@@ -26,7 +26,7 @@ _wur_ static int init_protect_list(void)
 	return protect_list ? 0 : -ENOMEM;
 }
 
-size_t protect_list_size()
+size_t protect_list_size(void)
 {
 	size_t count = 0;
 
@@ -39,7 +39,7 @@ size_t protect_list_size()
 	return count;
 }
 
-void free_protect_list()
+void free_protect_list(void)
 {
 	dllist_free(protect_list);
 	protect_list = NULL;

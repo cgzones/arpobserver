@@ -8,7 +8,7 @@
 
 static FILE *data_fd = NULL;
 
-int output_flatfile_init()
+int output_flatfile_init(void)
 {
 	if (!global_cfg.data_file) {
 		log_debug("No flatfile specified. Skipping initialization...");
@@ -24,7 +24,7 @@ int output_flatfile_init()
 	return 0;
 }
 
-int output_flatfile_reload()
+int output_flatfile_reload(void)
 {
 	output_flatfile_close();
 
@@ -49,7 +49,7 @@ int output_flatfile_save(const struct pkt *p, const char *mac_str, const char *i
 	return 0;
 }
 
-void output_flatfile_close()
+void output_flatfile_close(void)
 {
 	if (!data_fd)
 		return;

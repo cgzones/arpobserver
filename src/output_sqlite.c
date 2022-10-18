@@ -23,7 +23,7 @@ static sqlite3 *sqlite_conn = NULL;
 static sqlite3_stmt *sqlite_stmt;
 #endif
 
-int output_sqlite_init()
+int output_sqlite_init(void)
 {
 #ifdef HAVE_LIBSQLITE3
 	const char *tablename = global_cfg.sqlite_tablename ?: PACKAGE;
@@ -65,7 +65,7 @@ int output_sqlite_init()
 	return 0;
 }
 
-int output_sqlite_reload()
+int output_sqlite_reload(void)
 {
 	output_sqlite_close();
 
@@ -121,7 +121,7 @@ int output_sqlite_save(const struct pkt *p, const char *mac_str, const char *ip_
 	return 0;
 }
 
-void output_sqlite_close()
+void output_sqlite_close(void)
 {
 #ifdef HAVE_LIBSQLITE3
 	if (sqlite_conn) {
