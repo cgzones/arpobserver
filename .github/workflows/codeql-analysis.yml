@@ -32,7 +32,7 @@ jobs:
       uses: actions/checkout@230611dbd0eb52da1e1f4f7bc8bb0c3a339fc8b7
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@bcd7e6896fd183906513908bcc690ef5a3345f1c
+      uses: github/codeql-action/init@aa0e650c6a3f17884f81106e54e207cc0f669aa2
       with:
         languages: ${{ matrix.language }}
 
@@ -53,4 +53,4 @@ jobs:
       run: meson compile -C build/
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@bcd7e6896fd183906513908bcc690ef5a3345f1c
+      uses: github/codeql-action/analyze@aa0e650c6a3f17884f81106e54e207cc0f669aa2
