@@ -46,13 +46,18 @@ START_TEST(test_random)
 		int action = rand() % 5;
 		size_t elem_no;
 		struct dllist_entry *elem;
+		int *ptr;
 
 		switch (action) {
 		case 0:
-			ck_assert_int_eq(0, dllist_push_front(h, malloc(sizeof(int))));
+			ptr = malloc(sizeof(int));
+			ck_assert_ptr_nonnull(ptr);
+			ck_assert_int_eq(0, dllist_push_front(h, ptr));
 			break;
 		case 1:
-			ck_assert_int_eq(0, dllist_push_back(h, malloc(sizeof(int))));
+			ptr = malloc(sizeof(int));
+			ck_assert_ptr_nonnull(ptr);
+			ck_assert_int_eq(0, dllist_push_back(h, ptr));
 			break;
 		case 2:
 			if (h->size == 0) {
