@@ -35,6 +35,8 @@ static time_t state_sync_interval = 60 * 5;   // 5m
 static time_t last_sync_time = 0;
 
 #define FMT_TIMESTAMP_SIZE 16
+
+_access_woc_(1, 2)
 static char *format_timestamp(char *buffer, size_t size, time_t time)
 {
 	struct tm t;
