@@ -60,7 +60,7 @@ static const uint8_t *find_ip_address(const struct dllist_head *state,
 	assert(mac_address);
 	assert(ip_len == IP4_LEN || ip_len == IP6_LEN);
 
-	for (struct dllist_entry *cur_e = state->first; cur_e; cur_e = cur_e->next) {
+	for (const struct dllist_entry *cur_e = state->first; cur_e; cur_e = cur_e->next) {
 		const struct shm_log_entry *data = cur_e->data;
 
 		if (data->ip_len != ip_len)
