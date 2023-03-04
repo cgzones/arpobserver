@@ -1,5 +1,9 @@
 * ReadMe.md
 
+* show reason for IP change (kind of ARP packet)
+
+* support more than one IPv6 address per MAC address
+
 * rework man pages after configuration file addition
 * mysql man page
 
