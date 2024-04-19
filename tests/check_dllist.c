@@ -92,6 +92,8 @@ START_TEST(test_random)
 
 			dllist_delete_entry(h, elem);
 			break;
+		default:
+			ck_abort_msg("unreachable");
 		}
 
 		sum_size += h->size;
