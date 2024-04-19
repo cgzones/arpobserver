@@ -218,6 +218,7 @@ int write_state_file(const char *path, const struct dllist_head *state)
 {
 	_cleanup_fclose_ FILE *stream = NULL;
 	size_t count = 0;
+	int rc;
 
 	assert(path);
 	assert(state);
@@ -245,6 +246,10 @@ int write_state_file(const char *path, const struct dllist_head *state)
 		fprintf(stream, "%" PRIu64 ",%s,%s,%s\n", data->timestamp, data->interface, mac_str, ip_str);
 		count++;
 	}
+
+	rc = fclose(TAKE_PTR(stream));
+	if (rc != 0)
+		return log_error("Failed to write to file '%s': %m", path);
 
 	log_debug("Saved %zu state entries to disk.", count);
 	return 0;
