@@ -19,27 +19,27 @@ enum log_mode
 };
 void log_mode(enum log_mode mode);
 
-__attribute__((format(printf, 3, 4))) int _log_msg(int priority, int passed_errno, const char *format, ...);
+__attribute__((format(printf, 3, 4))) int log_msg_impl(int priority, int passed_errno, const char *format, ...);
 
-#define log_error(format, ...) _log_msg(LOG_ERR, (errno), (format), ##__VA_ARGS__)
+#define log_error(format, ...) log_msg_impl(LOG_ERR, (errno), (format), ##__VA_ARGS__)
 
-#define log_errno_error(passed_errno, format, ...) _log_msg(LOG_ERR, (passed_errno), (format), ##__VA_ARGS__)
+#define log_errno_error(passed_errno, format, ...) log_msg_impl(LOG_ERR, (passed_errno), (format), ##__VA_ARGS__)
 
-#define log_warn(format, ...) _log_msg(LOG_WARNING, (errno), (format), ##__VA_ARGS__)
+#define log_warn(format, ...) log_msg_impl(LOG_WARNING, (errno), (format), ##__VA_ARGS__)
 
-#define log_errno_warn(passed_errno, format, ...) _log_msg(LOG_WARNING, (passed_errno), (format), ##__VA_ARGS__)
+#define log_errno_warn(passed_errno, format, ...) log_msg_impl(LOG_WARNING, (passed_errno), (format), ##__VA_ARGS__)
 
-#define log_notice(format, ...) _log_msg(LOG_NOTICE, (errno), (format), ##__VA_ARGS__)
+#define log_notice(format, ...) log_msg_impl(LOG_NOTICE, (errno), (format), ##__VA_ARGS__)
 
-#define log_errno_notice(passed_errno, format, ...) _log_msg(LOG_NOTICE, (passed_errno), (format), ##__VA_ARGS__)
+#define log_errno_notice(passed_errno, format, ...) log_msg_impl(LOG_NOTICE, (passed_errno), (format), ##__VA_ARGS__)
 
-#define log_info(format, ...) _log_msg(LOG_INFO, (errno), (format), ##__VA_ARGS__)
+#define log_info(format, ...) log_msg_impl(LOG_INFO, (errno), (format), ##__VA_ARGS__)
 
-#define log_errno_info(passed_errno, format, ...) _log_msg(LOG_INFO, (passed_errno), (format), ##__VA_ARGS__)
+#define log_errno_info(passed_errno, format, ...) log_msg_impl(LOG_INFO, (passed_errno), (format), ##__VA_ARGS__)
 
-#define log_debug(format, ...) _log_msg(LOG_DEBUG, (errno), (format), ##__VA_ARGS__)
+#define log_debug(format, ...) log_msg_impl(LOG_DEBUG, (errno), (format), ##__VA_ARGS__)
 
-#define log_errno_debug(passed_errno, format, ...) _log_msg(LOG_DEBUG, (passed_errno), (format), ##__VA_ARGS__)
+#define log_errno_debug(passed_errno, format, ...) log_msg_impl(LOG_DEBUG, (passed_errno), (format), ##__VA_ARGS__)
 
 #define log_oom() log_error("Cannot allocate memory [%s():%d]: %m", __func__, __LINE__)
 

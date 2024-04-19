@@ -45,7 +45,7 @@ void log_mode(enum log_mode mode)
 	log_context.mode = mode;
 }
 
-int _log_msg(int priority, int passed_errno, const char *format, ...)
+int log_msg_impl(int priority, int passed_errno, const char *format, ...)
 {
 	va_list pvar;
 	char buffer[BUFSIZ];

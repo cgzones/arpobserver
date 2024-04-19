@@ -28,7 +28,7 @@
 		if (*p)                         \
 			func(*p);               \
 	}                                       \
-	struct __useless_struct_to_allow_trailing_semicolon__
+	struct useless_struct_to_allow_trailing_semicolon__
 
 
 DEFINE_TRIVIAL_CLEANUP_FUNC(char *, free);
