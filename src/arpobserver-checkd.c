@@ -36,8 +36,7 @@ static time_t last_sync_time = 0;
 
 #define FMT_TIMESTAMP_SIZE 16
 
-_access_woc_(1, 2)
-static char *format_timestamp(char *buffer, size_t size, time_t time)
+_access_woc_(1, 2) static char *format_timestamp(char *buffer, size_t size, time_t time)
 {
 	struct tm t;
 	size_t rc;
@@ -296,12 +295,15 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 				if (lease_time <= last_seen_time)
 					log_info("Event -- IP changed on IF [%s] for MAC [%s], last seen %s, after a lease time of %" PRIu64
 						 " seconds from [%s] to [%s] (other IP [%s])",
-						 data->interface, mac_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
-						 last_seen_time, data_ip_str, ip_str, other_ip_str);
-				else
-					log_warn("Event -- IP changed on IF [%s] for MAC [%s], last seen %s, from [%s] to [%s] (other IP [%s])",
-						 data->interface, mac_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
+						 data->interface, mac_str,
+						 format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp), last_seen_time,
 						 data_ip_str, ip_str, other_ip_str);
+				else
+					log_warn(
+						"Event -- IP changed on IF [%s] for MAC [%s], last seen %s, from [%s] to [%s] (other IP [%s])",
+						data->interface, mac_str,
+						format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp), data_ip_str,
+						ip_str, other_ip_str);
 			} else {
 				if (lease_time <= last_seen_time)
 					log_notice("Event -- IF and IP changed for MAC [%s], last seen %s, after a lease time of %" PRIu64
