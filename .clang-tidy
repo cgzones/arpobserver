@@ -23,4 +23,6 @@ Checks: '*,
          -readability-isolate-declaration,
          -readability-function-cognitive-complexity,
          -bugprone-assignment-in-if-condition,
-         -bugprone-easily-swappable-parameters'
+         -bugprone-easily-swappable-parameters,
+         -misc-include-cleaner,
+         -cppcoreguidelines-macro-to-enum'
