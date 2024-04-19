@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CC: clang-18
-      CFLAGS: '-O2 -flto -Weverything -Wno-padded -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression -Wno-language-extension-token -Wno-disabled-macro-expansion -Wno-reserved-macro-identifier -Wno-reserved-identifier -Wno-error=covered-switch-default'
+      CFLAGS: '-O2 -flto -Weverything -Wno-gnu-zero-variadic-macro-arguments -Wno-unsafe-buffer-usage -Wno-padded -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression-from-macro-expansion -Wno-language-extension-token -Wno-covered-switch-default -Wno-disabled-macro-expansion'
     steps:
     - uses: actions/checkout@v4
     - name: install clang repo
