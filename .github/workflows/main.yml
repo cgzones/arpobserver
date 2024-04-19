@@ -21,13 +21,7 @@ jobs:
         sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-18 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
-    - name: install asciidoctor, check and meson from Debian sid
-      run: |
-          wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
-          sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
-          sudo apt-get update -q
-          sudo apt-get install -y asciidoctor check meson
+      run: sudo apt-get install -y asciidoctor check clang-18 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev meson
     - name: setup
       run: meson setup build -Dwerror=true
     - name: build
@@ -49,13 +43,7 @@ jobs:
         sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main' -y
         sudo apt-get update -q
     - name: install dependencies
-      run: sudo apt-get install -y clang-18 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev
-    - name: install asciidoctor, check and meson from Debian sid
-      run: |
-          wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
-          sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
-          sudo apt-get update -q
-          sudo apt-get install -y asciidoctor check meson
+      run: sudo apt-get install -y asciidoctor check clang-18 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev meson
     - name: setup
       run: meson setup build -Dwerror=true
     - name: build
@@ -82,8 +70,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: install codespell
         run: |
-          wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
-          sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
           sudo apt-get update -q
           sudo apt-get install -y codespell
       - name: run codespell
