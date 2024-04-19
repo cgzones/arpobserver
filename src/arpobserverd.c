@@ -24,7 +24,6 @@
 #include "output_sqlite.h"
 #include "parse.h"
 #include "process.h"
-#include "shm.h"
 #include "storage.h"
 #include "util.h"
 

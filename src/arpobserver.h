@@ -3,7 +3,6 @@
 #include <event.h>
 
 #include "cleanup.h"
-#include "common.h"
 #include "config.h"
 #include "mcache.h"
 
@@ -18,7 +17,6 @@
 #include <netinet/ip6.h>
 #include <stdbool.h>
 #include <sys/socket.h>
-#include <time.h>
 
 struct iface_config
 {

@@ -1,11 +1,9 @@
 #pragma once
 
 #include <arpa/inet.h>
-#include <errno.h>
 #include <netinet/if_ether.h>
 #include <pcap.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <sys/socket.h>
 
 #include "macro.h"
