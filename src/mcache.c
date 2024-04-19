@@ -60,7 +60,7 @@ int cache_add(const uint8_t *l2_addr, const uint8_t *ip_addr, uint8_t len, time_
 	assert(ip_addr);
 	assert(cache);
 
-	node = calloc(sizeof(*node), 1);
+	node = calloc(1, sizeof(*node));
 	if (!node)
 		return log_oom();
 
