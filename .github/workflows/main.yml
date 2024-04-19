@@ -23,7 +23,7 @@ jobs:
     - name: install dependencies
       run: sudo apt-get install -y asciidoctor check clang-18 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev meson
     - name: setup
-      run: meson setup build -Dwerror=true
+      run: meson setup build -Dwerror=true || (cat build/meson-logs/meson-log.txt; exit 1)
     - name: build
       run: meson compile -C build/
     - name: test
@@ -45,7 +45,7 @@ jobs:
     - name: install dependencies
       run: sudo apt-get install -y asciidoctor check clang-18 libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev meson
     - name: setup
-      run: meson setup build -Dwerror=true
+      run: meson setup build -Dwerror=true || (cat build/meson-logs/meson-log.txt; exit 1)
     - name: build
       run: meson compile -C build/
     - name: test
