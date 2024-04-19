@@ -16,7 +16,7 @@ arpobserver-checkd - check Ethernet/IP pairings for notable changes
 == DESCRIPTION
 *arpobserver-checkd* listens to Ethernet/IP pairings events from *arpobserverd*(8) and checks for notable changes.
 It will alert about IP changes for the same MAC address and vice versa.
-Pairings will be forgotton after not seen for a lease time of 1 day.
+Pairings will be forgotten after not seen for a lease time of 1 day.
 
 
 [[options]]
@@ -55,7 +55,7 @@ Lines starting with a '#' are ignored.
 
 *LeaseRememberFactor*::
     Time in multiple of *LeaseTime* to remember addresses. +
-    Currently unused Ethernet/IP pairings are rembered for this amount of time to report previous usage hints. +
+    Currently unused Ethernet/IP pairings are remembered for this amount of time to report previous usage hints. +
     The default is 5 times the *LeaseTime*.
 
 *ProtectIP*::
