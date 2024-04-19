@@ -13,7 +13,7 @@ struct log_ctx_s
 	const char *ident;
 };
 
-static struct log_ctx_s _ctx = {LOG_MODE_STDERR, LOG_INFO, NULL};
+static struct log_ctx_s log_context = {LOG_MODE_STDERR, LOG_INFO, NULL};
 
 static const char *const log_level[] = {
 	"EMERG", "ALERT", "CRIT ", "ERR  ", "WARN ", "NOTE ", "INFO ", "DEBUG",
@@ -25,7 +25,7 @@ void log_open(const char *ident)
 
 	assert(ident);
 
-	_ctx.ident = ident;
+	log_context.ident = ident;
 
 	openlog(ident, flags, LOG_DAEMON);
 }
@@ -35,14 +35,14 @@ void log_max_priority(int priority)
 	assert(priority >= LOG_WARNING);
 	assert(priority <= LOG_DEBUG);
 
-	_ctx.max_priority = priority;
+	log_context.max_priority = priority;
 }
 
 void log_mode(enum log_mode mode)
 {
-	assert(_ctx.ident);   // make sure we have called log_open already
+	assert(log_context.ident);   // make sure we have called log_open already
 
-	_ctx.mode = mode;
+	log_context.mode = mode;
 }
 
 int _log_msg(int priority, int passed_errno, const char *format, ...)
@@ -50,7 +50,7 @@ int _log_msg(int priority, int passed_errno, const char *format, ...)
 	va_list pvar;
 	char buffer[BUFSIZ];
 
-	assert(_ctx.ident);   // make sure we have called log_open already
+	assert(log_context.ident);   // make sure we have called log_open already
 	assert(priority >= LOG_EMERG);
 	assert(priority <= LOG_DEBUG);
 	assert(passed_errno >= 0);
@@ -64,7 +64,7 @@ int _log_msg(int priority, int passed_errno, const char *format, ...)
 	// LOG_INFO
 	// LOG_DEBUG
 
-	if (priority > _ctx.max_priority)
+	if (priority > log_context.max_priority)
 		return passed_errno != 0 ? -passed_errno : -EBADRQC;
 
 	va_start(pvar, format);
@@ -72,16 +72,16 @@ int _log_msg(int priority, int passed_errno, const char *format, ...)
 	vsnprintf(buffer, sizeof(buffer), format, pvar);
 	va_end(pvar);
 
-	if (_ctx.mode & LOG_MODE_SYSLOG)
+	if (log_context.mode & LOG_MODE_SYSLOG)
 		syslog(priority, "%s: %s", log_level[priority], buffer);
 
-	if (_ctx.mode & LOG_MODE_STDERR) {
-		fprintf(stderr, "%s: %s: %s\n", _ctx.ident, log_level[priority], buffer);
+	if (log_context.mode & LOG_MODE_STDERR) {
+		fprintf(stderr, "%s: %s: %s\n", log_context.ident, log_level[priority], buffer);
 		fflush(stderr);
 	}
 
-	if (_ctx.mode & LOG_MODE_STDOUT) {
-		fprintf(stdout, "%s: %s: %s\n", _ctx.ident, log_level[priority], buffer);
+	if (log_context.mode & LOG_MODE_STDOUT) {
+		fprintf(stdout, "%s: %s: %s\n", log_context.ident, log_level[priority], buffer);
 		fflush(stdout);
 	}
 
