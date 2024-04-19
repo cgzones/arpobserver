@@ -32,7 +32,7 @@ void cache_prune(struct mcache_node *dead_node, struct mcache_node **cache)
 	}
 }
 
-// Delete only deda_node from the cache
+// Delete only dead_node from the cache
 void cache_del(struct mcache_node *dead_node, struct mcache_node **cache)
 {
 	struct mcache_node *node;
