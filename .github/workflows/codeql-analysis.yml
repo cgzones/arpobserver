@@ -29,28 +29,21 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@230611dbd0eb52da1e1f4f7bc8bb0c3a339fc8b7
+      uses: actions/checkout@v4
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@aa0e650c6a3f17884f81106e54e207cc0f669aa2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
 
-    - name: Install Dependencies (standard)
-      run: sudo apt-get install -y build-essential libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev pkg-config
-
-    - name: Install dependencies (extra)
-      run: |
-          wget -O - https://ftp-master.debian.org/keys/archive-key-10.asc 2>/dev/null | sudo apt-key add -
-          sudo add-apt-repository 'deb http://deb.debian.org/debian/ sid main' -y
-          sudo apt-get update -q
-          sudo apt-get install -y asciidoctor check meson
+    - name: Install Dependencies
+      run: sudo apt-get install -y asciidoctor build-essential check libevent-dev libmysqlclient-dev libpcap-dev libsqlite3-dev meson pkg-config
 
     - name: Setup
-      run: meson setup build
+      run: meson setup build || (cat build/meson-logs/meson-log.txt; exit 1)
 
     - name: Build
       run: meson compile -C build/
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@aa0e650c6a3f17884f81106e54e207cc0f669aa2
+      uses: github/codeql-action/analyze@v3
