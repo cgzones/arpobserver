@@ -23,8 +23,6 @@ struct iface_config
 	char *name;
 	struct event *event;
 
-	int filter_active;
-	struct bpf_program pcap_filter;
 	pcap_t *pcap_handle;
 
 	struct mcache_node **cache;
@@ -37,8 +35,6 @@ static inline void free_iface_config(struct iface_config *p)
 	if (!p)
 		return;
 
-	if (p->filter_active)
-		pcap_freecode(&p->pcap_filter);
 	if (p->pcap_handle)
 		pcap_close(p->pcap_handle);
 	free(p->name);
@@ -53,11 +49,11 @@ struct arpobserver_config
 	int ratelimit;
 	unsigned hashsize;
 
-	int promisc_flag;
+	bool promisc_flag;
+	bool immediate_mode;
 	bool v4_flag;
 	bool v6_flag;
 	bool daemon_flag;
-	bool all_interfaces;
 
 	const char *uname;
 

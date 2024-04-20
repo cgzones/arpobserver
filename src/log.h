@@ -43,4 +43,6 @@ __attribute__((format(printf, 3, 4))) int log_msg_impl(int priority, int passed_
 
 #define log_oom() log_error("Cannot allocate memory [%s():%d]: %m", __func__, __LINE__)
 
+#define log(priority, format, ...) log_msg_impl(priority, (errno), (format), ##__VA_ARGS__)
+
 void log_close(void);

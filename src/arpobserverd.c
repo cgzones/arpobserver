@@ -146,11 +146,13 @@ static void read_cb(_unused_ evutil_socket_t fd, _unused_ short events, void *ar
 	pcap_callback(ifc, &header, packet);
 }
 
-static int add_iface(const char *iface)
+static int add_iface(const char *iface, bool force)
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
 	char const *filter;
 	_cleanup_iface_config_ struct iface_config *ifc = NULL;
+	struct bpf_program pcap_filter;
+	const int log_prio = force ? LOG_ERR : LOG_INFO;
 	int rc;
 
 	assert(iface);
@@ -179,44 +181,45 @@ static int add_iface(const char *iface)
 			return log_oom();
 	}
 
-	ifc->pcap_handle = pcap_open_live(iface, SNAP_LEN, global_cfg.promisc_flag, 1000, errbuf);
-	if (ifc->pcap_handle == NULL) {
-		if (global_cfg.all_interfaces)
-			log_info("Skipping interface %s: cannot open: %s", iface, errbuf);
-		else
-			log_warn("Skipping interface %s: cannot open: %s", iface, errbuf);
-		return 0;
-	}
+	ifc->pcap_handle = pcap_create(iface, errbuf);
+	if (!ifc->pcap_handle)
+		return log(log_prio, "Failed to create handle for interface %s: %s", iface, errbuf);
+
+	rc = pcap_set_snaplen(ifc->pcap_handle, SNAP_LEN);
+	if (rc != 0)
+		return log(log_prio, "Failed to set snap length for interface %s: %d", iface, rc);
+
+	rc = pcap_set_promisc(ifc->pcap_handle, global_cfg.promisc_flag ? 1 : 0);
+	if (rc != 0)
+		return log(log_prio, "Failed to %s promisc mode on interface %s: %d", iface, global_cfg.promisc_flag ? "enable" : "disable",
+			   rc);
+
+	rc = pcap_set_immediate_mode(ifc->pcap_handle, global_cfg.immediate_mode ? 1 : 0);
+	if (rc != 0)
+		return log(log_prio, "Failed to %s immediate mode on interface %s: %d", global_cfg.immediate_mode ? "enable" : "disable",
+			   iface, rc);
+
+	rc = pcap_set_timeout(ifc->pcap_handle, 1000);
+	if (rc != 0)
+		return log(log_prio, "Failed to set timeout for interface %s: %d", iface, rc);
+
+	rc = pcap_activate(ifc->pcap_handle);
+	if (rc < 0)
+		return log(log_prio, "Failed to activate interface %s: %d", iface, rc);
 
 	rc = pcap_datalink(ifc->pcap_handle);
-	if (rc != DLT_EN10MB) {
-		if (global_cfg.all_interfaces)
-			log_info("Skipping interface %s: invalid data link layer %s (%s).", iface, pcap_datalink_val_to_name(rc),
-				 pcap_datalink_val_to_description(rc));
-		else
-			log_warn("Skipping interface %s: invalid data link layer %s (%s).", iface, pcap_datalink_val_to_name(rc),
-				 pcap_datalink_val_to_description(rc));
-		return 0;
-	}
+	if (rc != DLT_EN10MB)
+		return log(log_prio, "Interface %s has invalid data link layer %s (%s).", iface, pcap_datalink_val_to_name(rc),
+			   pcap_datalink_val_to_description(rc));
 
-	rc = pcap_compile(ifc->pcap_handle, &ifc->pcap_filter, filter, 0, 0);
-	if (rc == -1) {
-		if (global_cfg.all_interfaces)
-			log_info("Skipping interface %s: cannot compile filter: %s", iface, pcap_geterr(ifc->pcap_handle));
-		else
-			log_warn("Skipping interface %s: cannot compile filter: %s", iface, pcap_geterr(ifc->pcap_handle));
-		return 0;
-	}
+	rc = pcap_compile(ifc->pcap_handle, &pcap_filter, filter, /*optimize=*/1, PCAP_NETMASK_UNKNOWN);
+	if (rc != 0)
+		return log(log_prio, "Failed to compile filter for interface %s: %s", iface, pcap_geterr(ifc->pcap_handle));
 
-	rc = pcap_setfilter(ifc->pcap_handle, &ifc->pcap_filter);
-	if (rc == -1) {
-		if (global_cfg.all_interfaces)
-			log_info("Skipping iface %s: cannot set filter: %s", iface, pcap_geterr(ifc->pcap_handle));
-		else
-			log_warn("Skipping iface %s: cannot set filter: %s", iface, pcap_geterr(ifc->pcap_handle));
-		return 0;
-	}
-	ifc->filter_active = 0;
+	rc = pcap_setfilter(ifc->pcap_handle, &pcap_filter);
+	pcap_freecode(&pcap_filter);
+	if (rc != 0)
+		return log(log_prio, "Failed to set filter for interface %s: %s", iface, pcap_geterr(ifc->pcap_handle));
 
 	rc = pcap_fileno(ifc->pcap_handle);
 	assert(rc != -1);
@@ -246,7 +249,6 @@ static struct iface_config *del_iface(struct iface_config *ifc)
 
 	event_free(ifc->event);
 	ifc->event = NULL;
-	pcap_freecode(&ifc->pcap_filter);
 	pcap_close(ifc->pcap_handle);
 	ifc->pcap_handle = NULL;
 
@@ -436,13 +438,29 @@ static int config_accept(const char *key, const char *value, size_t lineno)
 
 	if (string_eq("Promisc", key)) {
 		if (string_eq("yes", value)) {
-			global_cfg.promisc_flag = 1;
+			global_cfg.promisc_flag = true;
 
 			return 0;
 		}
 
 		if (string_eq("no", value)) {
-			global_cfg.promisc_flag = 0;
+			global_cfg.promisc_flag = false;
+
+			return 0;
+		}
+
+		return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
+	}
+
+	if (string_eq("Immediate", key)) {
+		if (string_eq("yes", value)) {
+			global_cfg.immediate_mode = true;
+
+			return 0;
+		}
+
+		if (string_eq("no", value)) {
+			global_cfg.immediate_mode = false;
 
 			return 0;
 		}
@@ -572,6 +590,8 @@ int main(int argc, char *argv[])
 {
 	bool syslog = false;
 	bool verbose = false;
+	bool all_interfaces = false;
+	bool manual = false;
 	const char *config_path = DEFAULT_CONFIG_PATH;
 
 	// clang-format off
@@ -593,11 +613,11 @@ int main(int argc, char *argv[])
 
 	/* Default configuration */
 	global_cfg = (struct arpobserver_config){
-		.all_interfaces = false,
 		.daemon_flag = false,
 		.ratelimit = 0,
 		.hashsize = 1,
-		.promisc_flag = 1,
+		.promisc_flag = true,
+		.immediate_mode = true,
 		.sqlite_filename = NULL,
 		.uname = NULL,
 		.shm_data.size = DEFAULT_SHM_LOG_SIZE,
@@ -622,7 +642,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'A':
-			global_cfg.all_interfaces = true;
+			all_interfaces = true;
 			break;
 
 		case 'c':
@@ -703,11 +723,19 @@ int main(int argc, char *argv[])
 	else
 		log_info("PROMISC mode disabled.");
 
+	if (global_cfg.immediate_mode)
+		log_info("IMMEDIATE mode enabled.");
+	else
+		log_info("IMMEDIATE mode disabled.");
+
 	if (optind < argc) {
-		global_cfg.all_interfaces = false;
+		manual = true;
 		for (int i = optind; i < argc; i++)
-			add_iface(argv[i]);
-	} else {
+			if (add_iface(argv[i], true) < 0)
+				return EXIT_FAILURE;
+	}
+
+	if (!manual || all_interfaces) {
 		pcap_if_t *alldevsp;
 		char errbuf[PCAP_ERRBUF_SIZE];
 		int r;
@@ -719,15 +747,15 @@ int main(int argc, char *argv[])
 		}
 
 		if (alldevsp) {
-			if (global_cfg.all_interfaces) {
+			if (all_interfaces) {
 				for (const pcap_if_t *devsp = alldevsp; devsp; devsp = devsp->next) {
 					if (devsp->flags & PCAP_IF_LOOPBACK)
 						continue;
 
-					add_iface(devsp->name);
+					add_iface(devsp->name, false);
 				}
 			} else
-				add_iface(alldevsp->name);
+				add_iface(alldevsp->name, true);
 		}
 
 		pcap_freealldevs(alldevsp);
