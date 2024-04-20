@@ -550,6 +550,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (optind < argc) {
+		usage();
+		return EXIT_FAILURE;
+	}
+
 	log_open(CHECK_ARGV0);
 	log_mode(lmode);
 	if (verbose)

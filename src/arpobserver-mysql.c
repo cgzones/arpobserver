@@ -384,6 +384,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (optind < argc) {
+		usage();
+		return EXIT_FAILURE;
+	}
+
 	log_open(MYSQL_ARGV0);
 	if (verbose)
 		log_max_priority(LOG_DEBUG);

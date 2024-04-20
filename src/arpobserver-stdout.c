@@ -82,6 +82,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (optind < argc) {
+		usage();
+		return EXIT_FAILURE;
+	}
+
 	log_open("arpobserver-syslog");
 	log_mode(LOG_MODE_STDOUT);
 	if (verbose)
