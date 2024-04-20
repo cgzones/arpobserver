@@ -215,10 +215,12 @@ static int add_iface(const char *iface, bool force)
 		return log(log_prio, "Failed to %s promisc mode on interface %s: %d", iface, global_cfg.promisc_flag ? "enable" : "disable",
 			   rc);
 
-	rc = pcap_set_immediate_mode(ifc->pcap_handle, global_cfg.immediate_mode ? 1 : 0);
-	if (rc != 0)
-		return log(log_prio, "Failed to %s immediate mode on interface %s: %d", global_cfg.immediate_mode ? "enable" : "disable",
-			   iface, rc);
+	if (global_cfg.immediate != IM_DEFAULT) {
+		rc = pcap_set_immediate_mode(ifc->pcap_handle, global_cfg.immediate == IM_ON ? 1 : 0);
+		if (rc != 0)
+			return log(log_prio, "Failed to %s immediate mode on interface %s: %d",
+				   global_cfg.immediate == IM_ON ? "enable" : "disable", iface, rc);
+	}
 
 	rc = pcap_set_timeout(ifc->pcap_handle, 1000);
 	if (rc != 0)
@@ -242,10 +244,15 @@ static int add_iface(const char *iface, bool force)
 	if (rc != 0)
 		return log(log_prio, "Failed to set filter for interface %s: %s", iface, pcap_geterr(ifc->pcap_handle));
 
-	rc = pcap_setdirection(ifc->pcap_handle, global_cfg.direction_inonly ? PCAP_D_IN : PCAP_D_INOUT);
-	if (rc != 0)
-		return log(log_prio, "Failed to set direction to %s for interface %s: %d - %s",
-			   global_cfg.direction_inonly ? "IN" : "INOUT", iface, rc, pcap_geterr(ifc->pcap_handle));
+	if (global_cfg.direction_filter != D_DEFAULT) {
+		rc = pcap_setdirection(ifc->pcap_handle, global_cfg.direction_filter == D_IN
+								 ? PCAP_D_IN
+								 : (global_cfg.direction_filter == D_OUT ? PCAP_D_OUT : PCAP_D_INOUT));
+		if (rc != 0)
+			return log(log_prio, "Failed to set direction to %s for interface %s: %d - %s",
+				   global_cfg.direction_filter == D_IN ? "IN" : (global_cfg.direction_filter == D_OUT ? "OUT" : "INOUT"),
+				   iface, rc, pcap_geterr(ifc->pcap_handle));
+	}
 
 	rc = if_get_mac_addr(iface, ifc->addr);
 	if (rc != 0)
@@ -485,14 +492,20 @@ static int config_accept(const char *key, const char *value, size_t lineno)
 	}
 
 	if (string_eq("Immediate", key)) {
-		if (string_eq("yes", value)) {
-			global_cfg.immediate_mode = true;
+		if (string_eq("on", value)) {
+			global_cfg.immediate = IM_ON;
 
 			return 0;
 		}
 
-		if (string_eq("no", value)) {
-			global_cfg.immediate_mode = false;
+		if (string_eq("off", value)) {
+			global_cfg.immediate = IM_OFF;
+
+			return 0;
+		}
+
+		if (string_eq("default", value)) {
+			global_cfg.immediate = IM_DEFAULT;
 
 			return 0;
 		}
@@ -500,15 +513,27 @@ static int config_accept(const char *key, const char *value, size_t lineno)
 		return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 	}
 
-	if (string_eq("DirectionInOnly", key)) {
-		if (string_eq("yes", value)) {
-			global_cfg.direction_inonly = true;
+	if (string_eq("Direction", key)) {
+		if (string_eq("in", value)) {
+			global_cfg.direction_filter = D_IN;
 
 			return 0;
 		}
 
-		if (string_eq("no", value)) {
-			global_cfg.direction_inonly = false;
+		if (string_eq("out", value)) {
+			global_cfg.direction_filter = D_OUT;
+
+			return 0;
+		}
+
+		if (string_eq("inout", value)) {
+			global_cfg.direction_filter = D_INOUT;
+
+			return 0;
+		}
+
+		if (string_eq("default", value)) {
+			global_cfg.direction_filter = D_DEFAULT;
 
 			return 0;
 		}
@@ -665,8 +690,8 @@ int main(int argc, char *argv[])
 		.ratelimit = 0,
 		.hashsize = 1,
 		.promisc_flag = true,
-		.immediate_mode = true,
-		.direction_inonly = false,
+		.immediate = IM_DEFAULT,
+		.direction_filter = D_DEFAULT,
 		.sqlite_filename = NULL,
 		.uname = NULL,
 		.shm_data.size = DEFAULT_SHM_LOG_SIZE,
@@ -768,8 +793,12 @@ int main(int argc, char *argv[])
 		log_debug("Duplicate entries ratelimiting disabled.");
 
 	log_info("PROMISC mode %s.", global_cfg.promisc_flag ? "enabled" : "disabled");
-	log_info("IMMEDIATE mode %s.", global_cfg.immediate_mode ? "enabled" : "disabled");
-	log_info("Direction set to %s.", global_cfg.direction_inonly ? "IN" : "INOUT");
+	log_info("IMMEDIATE mode %s.",
+		 global_cfg.immediate == IM_DEFAULT ? "default" : (global_cfg.immediate == IM_ON ? "enabled" : "disabled"));
+	log_info("Direction set to %s.",
+		 global_cfg.direction_filter == D_DEFAULT
+			 ? "default"
+			 : (global_cfg.direction_filter == D_IN ? "IN" : (global_cfg.direction_filter == D_OUT ? "OUT" : "INOUT")));
 
 	if (optind < argc) {
 		manual = true;

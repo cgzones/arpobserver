@@ -46,14 +46,32 @@ static inline void free_iface_config(struct iface_config *p)
 DEFINE_TRIVIAL_CLEANUP_FUNC(struct iface_config *, free_iface_config);
 #define _cleanup_iface_config_ _cleanup_(free_iface_configp)
 
+enum immediate_mode
+{
+	IM_DEFAULT,
+	IM_OFF,
+	IM_ON,
+};
+
+enum direction
+{
+	D_DEFAULT,
+	D_IN,
+	D_OUT,
+	D_INOUT,
+};
+
 struct arpobserver_config
 {
 	int ratelimit;
 	unsigned hashsize;
 
+	/* promisc mode */
 	bool promisc_flag;
-	bool immediate_mode;
-	bool direction_inonly;
+	/* immediate mode */
+	enum immediate_mode immediate;
+	/* direction filter */
+	enum direction direction_filter;
 	bool v4_flag;
 	bool v6_flag;
 	bool daemon_flag;
