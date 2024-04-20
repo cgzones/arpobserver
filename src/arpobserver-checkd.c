@@ -499,7 +499,7 @@ int main(int argc, char *argv[])
 
 		case 'h':
 			usage();
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 
 		case 's':
 			state_file_path = optarg;
@@ -507,7 +507,7 @@ int main(int argc, char *argv[])
 
 		case 'V':
 			printf("%s %s\n", CHECK_ARGV0, VERSION);
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 
 		case 'v':
 			verbose = true;
@@ -520,7 +520,7 @@ int main(int argc, char *argv[])
 		case '?':
 		default:
 			usage();
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 	}
 

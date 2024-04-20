@@ -635,10 +635,10 @@ int main(int argc, char *argv[])
 
 		case 'h':
 			usage();
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 
 		case 'L':
-			exit(list_interfaces());
+			return list_interfaces();
 
 		case 'o':
 			global_cfg.data_file = optarg;
@@ -662,11 +662,11 @@ int main(int argc, char *argv[])
 
 		case 'V':
 			printf("%s %s\n", MAIN_ARGV0, VERSION);
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 
 		default:
 			usage();
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 	}
 
