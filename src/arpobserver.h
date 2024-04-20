@@ -53,6 +53,7 @@ struct arpobserver_config
 
 	bool promisc_flag;
 	bool immediate_mode;
+	bool direction_inonly;
 	bool v4_flag;
 	bool v6_flag;
 	bool daemon_flag;

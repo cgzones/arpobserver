@@ -242,6 +242,11 @@ static int add_iface(const char *iface, bool force)
 	if (rc != 0)
 		return log(log_prio, "Failed to set filter for interface %s: %s", iface, pcap_geterr(ifc->pcap_handle));
 
+	rc = pcap_setdirection(ifc->pcap_handle, global_cfg.direction_inonly ? PCAP_D_IN : PCAP_D_INOUT);
+	if (rc != 0)
+		return log(log_prio, "Failed to set direction to %s for interface %s: %d - %s",
+			   global_cfg.direction_inonly ? "IN" : "INOUT", iface, rc, pcap_geterr(ifc->pcap_handle));
+
 	rc = if_get_mac_addr(iface, ifc->addr);
 	if (rc != 0)
 		return log(log_prio, "Failed to get hardware address for interface %s: %m", iface);
@@ -495,6 +500,22 @@ static int config_accept(const char *key, const char *value, size_t lineno)
 		return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
 	}
 
+	if (string_eq("DirectionInOnly", key)) {
+		if (string_eq("yes", value)) {
+			global_cfg.direction_inonly = true;
+
+			return 0;
+		}
+
+		if (string_eq("no", value)) {
+			global_cfg.direction_inonly = false;
+
+			return 0;
+		}
+
+		return log_error("Invalid value '%s' for option %s at line %zu.", value, key, lineno);
+	}
+
 	if (string_eq("RateLimit", key)) {
 		char *endptr;
 		long int res = strtol(value, &endptr, 10);
@@ -645,6 +666,7 @@ int main(int argc, char *argv[])
 		.hashsize = 1,
 		.promisc_flag = true,
 		.immediate_mode = true,
+		.direction_inonly = false,
 		.sqlite_filename = NULL,
 		.uname = NULL,
 		.shm_data.size = DEFAULT_SHM_LOG_SIZE,
@@ -745,15 +767,9 @@ int main(int argc, char *argv[])
 	else
 		log_debug("Duplicate entries ratelimiting disabled.");
 
-	if (global_cfg.promisc_flag)
-		log_info("PROMISC mode enabled.");
-	else
-		log_info("PROMISC mode disabled.");
-
-	if (global_cfg.immediate_mode)
-		log_info("IMMEDIATE mode enabled.");
-	else
-		log_info("IMMEDIATE mode disabled.");
+	log_info("PROMISC mode %s.", global_cfg.promisc_flag ? "enabled" : "disabled");
+	log_info("IMMEDIATE mode %s.", global_cfg.immediate_mode ? "enabled" : "disabled");
+	log_info("Direction set to %s.", global_cfg.direction_inonly ? "IN" : "INOUT");
 
 	if (optind < argc) {
 		manual = true;
