@@ -239,12 +239,14 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 
 			if (if_match) {
 				if (lease_time <= last_seen_time)
-					log_info("Event -- MAC changed for IP [%s], last seen %s, after a lease time of %" PRIu64
+					log_info("Event -- MAC changed on IF [%s] for IP [%s], last seen %s, after a lease time of %" PRIu64
 						 " seconds from [%s] to [%s]",
-						 ip_str, format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp),
-						 last_seen_time, data_mac_str, mac_str);
+						 e->interface, ip_str,
+						 format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp), last_seen_time,
+						 data_mac_str, mac_str);
 				else
-					log_warn("Event -- MAC changed for IP [%s], last seen %s, from [%s] to [%s]", ip_str,
+					log_warn("Event -- MAC changed on IF [%s] for IP [%s], last seen %s, from [%s] to [%s]",
+						 e->interface, ip_str,
 						 format_timestamp(format_buffer, sizeof(format_buffer), data->timestamp), data_mac_str,
 						 mac_str);
 			} else {
