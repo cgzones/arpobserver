@@ -28,14 +28,21 @@ _nonnull_ _wur_ static int parse_arp(struct pkt *p)
 	p->len -= sizeof(struct ether_arp);
 
 	if (be16toh(p->arp.arp_hrd) != ARPHRD_ETHER) {
-		log_notice("%s: Ignoring ARP packet with hardware address format %d", p->ifc->name, be16toh(p->arp.arp_hrd));
+		log_notice("%s: Ignoring ARP packet with hardware address format %d. Packet dump: %s", p->ifc->name,
+			   be16toh(p->arp.arp_hrd), base64_encode_packet(p));
 		return -1;
 	}
 
 	if (be16toh(p->arp.arp_pro) != ETHERTYPE_IP) {
-		log_notice("%s: Ignoring ARP packet with protocol address format %d", p->ifc->name, be16toh(p->arp.arp_pro));
+		log_notice("%s: Ignoring ARP packet with protocol address format %d. Packet dump: %s", p->ifc->name,
+			   be16toh(p->arp.arp_pro), base64_encode_packet(p));
 		return -1;
 	}
+
+	/* Ethernet frames have a minimum size of 64 bytes, 4 bytes are consumed by libpcap */
+	if (p->len != 0 && p->pcap_header->caplen > 60)
+		log_notice("%s: ARP packet has trailing data of length %zu/%u. Packet dump: %s", p->ifc->name, p->len,
+			   p->pcap_header->caplen, base64_encode_packet(p));
 
 	return 0;
 }
@@ -87,6 +94,7 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 	} else {
 		/* parse_ipv6() should not call us with other types */
 		assert(0);
+		log_error("INTERNAL ERROR");
 		return -2;
 	}
 
@@ -99,9 +107,10 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 		opt = (const struct nd_opt_hdr *)p->pos;
 
 		if (opt->nd_opt_len == 0) {
-			log_warn("%s: Error parsing ICMPv6 ND options. Option length is 0. Packet dump: %s", p->ifc->name,
-				 base64_encode_packet(p));
-			return -2;
+			/* RFC 4861 4.6. */
+			log_notice("%s: Ignoring ICMPv6 ND packet with option length 0. Packet dump: %s", p->ifc->name,
+				   base64_encode_packet(p));
+			return -1;
 		}
 
 		if (p->len < opt->nd_opt_len * 8) {
@@ -130,10 +139,20 @@ _nonnull_ _wur_ static int parse_nd(struct pkt *p)
 			}
 			p->opt_tlla = opt;
 			break;
+		case ND_OPT_MTU:
+		case ND_OPT_RTR_ADV_INTERVAL:
+		case 25: /* Recursive DNS Server (RDNSS) */
+			break;
 		default:
+			log_notice("%s: Skipping unsupported ICMPv6 ND option %u. Packet dump: %s", p->ifc->name, opt->nd_opt_type,
+				   base64_encode_packet(p));
 			break;
 		}
 	}
+
+	if (p->len != 0)
+		log_notice("%s: ICMPv6 ND packet has trailing data of length %zu/%u. Packet dump: %s", p->ifc->name, p->len,
+			   p->pcap_header->caplen, base64_encode_packet(p));
 
 	return 0;
 }
@@ -190,7 +209,8 @@ _nonnull_ _wur_ static int parse_ipv6(struct pkt *p)
 			break;
 		}
 		default:
-			log_notice("%s: Ignoring unknown IPv6 extension header with type %d", p->ifc->name, next_header);
+			log_notice("%s: Ignoring unknown IPv6 extension header with type %d. Packet dump: %s", p->ifc->name, next_header,
+				   base64_encode_packet(p));
 			return -1;
 		}
 	}
@@ -328,7 +348,7 @@ int parse_packet(struct pkt *p)
 	case ETHERTYPE_IPV6:
 		return parse_ipv6(p);
 	default:
-		log_notice("%s: Unknown Ethernet packet type: %u", p->ifc->name, ether_type);
+		log_notice("%s: Unknown Ethernet packet type %u. Packet dump: %s", p->ifc->name, ether_type, base64_encode_packet(p));
 		return -1;
 	}
 }
