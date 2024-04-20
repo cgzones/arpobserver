@@ -1,6 +1,7 @@
 #pragma once
 
 #include <event.h>
+#include <stdint.h>
 
 #include "cleanup.h"
 #include "config.h"
@@ -21,6 +22,7 @@
 struct iface_config
 {
 	char *name;
+	uint8_t addr[ETHER_ADDR_LEN];
 	struct event *event;
 
 	pcap_t *pcap_handle;

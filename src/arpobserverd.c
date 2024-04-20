@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -146,6 +147,25 @@ static void read_cb(_unused_ evutil_socket_t fd, _unused_ short events, void *ar
 	pcap_callback(ifc, &header, packet);
 }
 
+static int if_get_mac_addr(const char *ifname, uint8_t addr[ETHER_ADDR_LEN])
+{
+	struct ifreq ir;
+	_cleanup_close_ int fd = -1;
+	int rc;
+
+	fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+	if (fd == -1)
+		return -errno;
+
+	safe_strncpy(ir.ifr_name, ifname, sizeof(ir.ifr_name));
+	rc = ioctl(fd, SIOCGIFHWADDR, &ir);
+	if (rc == -1)
+		return -errno;
+
+	memcpy(addr, ir.ifr_addr.sa_data, ETHER_ADDR_LEN);
+	return 0;
+}
+
 static int add_iface(const char *iface, bool force)
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
@@ -153,6 +173,7 @@ static int add_iface(const char *iface, bool force)
 	_cleanup_iface_config_ struct iface_config *ifc = NULL;
 	struct bpf_program pcap_filter;
 	const int log_prio = force ? LOG_ERR : LOG_INFO;
+	char mac_str[MAC_STR_LEN];
 	int rc;
 
 	assert(iface);
@@ -221,6 +242,10 @@ static int add_iface(const char *iface, bool force)
 	if (rc != 0)
 		return log(log_prio, "Failed to set filter for interface %s: %s", iface, pcap_geterr(ifc->pcap_handle));
 
+	rc = if_get_mac_addr(iface, ifc->addr);
+	if (rc != 0)
+		return log(log_prio, "Failed to get hardware address for interface %s: %m", iface);
+
 	rc = pcap_fileno(ifc->pcap_handle);
 	assert(rc != -1);
 
@@ -235,7 +260,9 @@ static int add_iface(const char *iface, bool force)
 		return -1;
 	}
 
-	log_info("Opened interface %s (%s).", iface, pcap_datalink_val_to_description(pcap_datalink(ifc->pcap_handle)));
+	convert_mac_addr_to_str(ifc->addr, mac_str);
+	log_info("Opened interface %s (%s) with hardware address %s.", iface,
+		 pcap_datalink_val_to_description(pcap_datalink(ifc->pcap_handle)), mac_str);
 
 	ifc->next = global_cfg.interfaces;
 	global_cfg.interfaces = TAKE_PTR(ifc);
@@ -752,7 +779,13 @@ int main(int argc, char *argv[])
 					if (devsp->flags & PCAP_IF_LOOPBACK)
 						continue;
 
+					for (int i = optind; i < argc; i++)
+						if (string_eq(argv[i], devsp->name))
+							goto next;
+
 					add_iface(devsp->name, false);
+
+next:;
 				}
 			} else
 				add_iface(alldevsp->name, true);
