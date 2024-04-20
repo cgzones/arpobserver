@@ -592,22 +592,22 @@ int main(int argc, char *argv[])
 	// clang-format on
 
 	/* Default configuration */
-	memset(&global_cfg, 0, sizeof(global_cfg));
-	global_cfg.all_interfaces = false;
-	global_cfg.daemon_flag = false;
-	global_cfg.ratelimit = 0;
-	global_cfg.hashsize = 1;
-	global_cfg.promisc_flag = 1;
-	global_cfg.ratelimit = 0;
-	global_cfg.sqlite_filename = NULL;
-	global_cfg.uname = NULL;
-	global_cfg.shm_data.size = DEFAULT_SHM_LOG_SIZE;
-	global_cfg.shm_data.filename = NULL;
-	global_cfg.v4_flag = false;
-	global_cfg.v6_flag = false;
+	global_cfg = (struct arpobserver_config){
+		.all_interfaces = false,
+		.daemon_flag = false,
+		.ratelimit = 0,
+		.hashsize = 1,
+		.promisc_flag = 1,
+		.sqlite_filename = NULL,
+		.uname = NULL,
+		.shm_data.size = DEFAULT_SHM_LOG_SIZE,
+		.shm_data.filename = NULL,
+		.v4_flag = false,
+		.v6_flag = false,
 #ifdef HAVE_LIBSQLITE3
-	global_cfg.sqlite_tablename = NULL;
+		.sqlite_tablename = NULL,
 #endif
+	};
 
 	for (;;) {
 		int option_index = 0;

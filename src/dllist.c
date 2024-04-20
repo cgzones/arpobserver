@@ -6,10 +6,12 @@ struct dllist_head *dllist_init(entry_data_free_t free_func)
 	if (!h)
 		return NULL;
 
-	h->first = NULL;
-	h->last = NULL;
-	h->size = 0;
-	h->free_func = free_func;
+	*h = (struct dllist_head){
+		.first = NULL,
+		.last = NULL,
+		.size = 0,
+		.free_func = free_func,
+	};
 
 	return h;
 }
@@ -44,9 +46,12 @@ int dllist_push_back(struct dllist_head *h, void *data)
 		return -ENOMEM;
 	}
 
-	new_entry->data = data;
-	new_entry->next = NULL;
-	new_entry->prev = h->last;
+	*new_entry = (struct dllist_entry){
+		.data = data,
+		.next = NULL,
+		.prev = h->last,
+	};
+
 	h->last = new_entry;
 	if (new_entry->prev)
 		new_entry->prev->next = new_entry;
@@ -71,9 +76,12 @@ int dllist_push_front(struct dllist_head *h, void *data)
 		return -ENOMEM;
 	}
 
-	new_entry->data = data;
-	new_entry->next = h->first;
-	new_entry->prev = NULL;
+	*new_entry = (struct dllist_entry){
+		.data = data,
+		.next = h->first,
+		.prev = NULL,
+	};
+
 	if (h->first)
 		h->first->prev = new_entry;
 	h->first = new_entry;
