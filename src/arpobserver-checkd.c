@@ -17,6 +17,7 @@
 #include "configfile.h"
 #include "dllist.h"
 #include "log.h"
+#include "packet.h"
 #include "protect.h"
 #include "shm.h"
 #include "shm_client.h"
@@ -76,6 +77,26 @@ static const uint8_t *find_ip_address(const struct dllist_head *state,
 	}
 
 	return NULL;
+}
+
+static bool save_pairing(const struct shm_log_entry *e)
+{
+	switch (e->origin) {
+	case ARP_REQ:
+	case ARP_ACD:
+	case ND_NS:
+	case ND_NA:
+	case ND_DAD:
+	case ND_RS:
+		return false;
+	case ARP_REP:
+	case ND_RA:
+		return true;
+	default:
+		assert(0);
+		log_error("INTERNAL ERROR");
+		return false;
+	}
 }
 
 static void process_entry(const struct shm_log_entry *e, void *arg)
@@ -149,22 +170,25 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 
 	// just add if the state is empty
 	if (state->size == 0) {
-		_cleanup_shmlogentry_ struct shm_log_entry *new_data = NULL;
+		if (save_pairing(e)) {
+			_cleanup_shmlogentry_ struct shm_log_entry *new_data = NULL;
 
-		new_data = malloc(sizeof(struct shm_log_entry));
-		if (!new_data) {
-			log_oom();
-			return;
+			new_data = malloc(sizeof(struct shm_log_entry));
+			if (!new_data) {
+				log_oom();
+				return;
+			}
+
+			memcpy(new_data, e, sizeof(struct shm_log_entry));
+
+			if (dllist_push_back(state, TAKE_PTR(new_data)) < 0) {
+				log_oom();
+				return;
+			}
+
+			log_info("Event -- New initial entry: IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
 		}
 
-		memcpy(new_data, e, sizeof(struct shm_log_entry));
-
-		if (dllist_push_back(state, TAKE_PTR(new_data)) < 0) {
-			log_oom();
-			return;
-		}
-
-		log_info("Event -- New initial entry: IF = [%s] & MAC = [%s] & IP = [%s]", e->interface, mac_str, ip_str);
 		return;
 	}
 
@@ -330,7 +354,7 @@ static void process_entry(const struct shm_log_entry *e, void *arg)
 	}
 
 	// add current entry to the start of the list
-	{
+	if (save_pairing(e)) {
 		_cleanup_shmlogentry_ struct shm_log_entry *new_data = NULL;
 		uint8_t other_ip_len = (e->ip_len == IP4_LEN) ? IP6_LEN : IP4_LEN;
 		const uint8_t *other_ip;
