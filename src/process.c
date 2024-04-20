@@ -82,7 +82,7 @@ void process_na(struct pkt *p)
 {
 	assert(p);
 
-	/* RFC4861 allows the 'Source link-layer address' to be omitted. */
+	/* RFC 4861 4.4. allows the 'Target link-layer address' to be omitted. */
 	if (!p->opt_tlla)
 		return;
 
@@ -97,7 +97,7 @@ void process_ra(struct pkt *p)
 {
 	assert(p);
 
-	/* RFC4861 allows the 'Source link-layer address' to be omitted. */
+	/* RFC 4861 4.2. allows the 'Source link-layer address' to be omitted. */
 	if (!p->opt_slla)
 		return;
 
@@ -112,7 +112,7 @@ void process_rs(struct pkt *p)
 {
 	assert(p);
 
-	/* RFC4861 specifies the 'Source link-layer address' SHOULD be included.
+	/* RFC 4861 4.1. specifies the 'Source link-layer address' SHOULD be included.
 	 * Ignore otherwise. */
 	if (!p->opt_slla)
 		return;
