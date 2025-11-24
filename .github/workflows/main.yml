@@ -14,7 +14,7 @@ jobs:
     env:
       CC: ${{ matrix.cc }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
@@ -36,7 +36,7 @@ jobs:
       CC: clang-18
       CFLAGS: '-O2 -flto -Weverything -Wno-gnu-zero-variadic-macro-arguments -Wno-unsafe-buffer-usage -Wno-padded -Wno-gnu-conditional-omitted-operand -Wno-gnu-statement-expression-from-macro-expansion -Wno-language-extension-token -Wno-covered-switch-default -Wno-disabled-macro-expansion'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: check-whitespaces
         run: git diff-tree --check $(git hash-object -t tree /dev/null) HEAD
 
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install codespell
         run: |
           sudo apt-get update -q
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: install clang-format
         run: |
             wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
@@ -99,7 +99,7 @@ jobs:
 #    runs-on: ubuntu-latest
 #
 #    steps:
-#      - uses: actions/checkout@v4
+#      - uses: actions/checkout@v6
 #      - name: install cppcheck
 #        run: sudo apt-get install -y cppcheck
 #      - name: cppcheck
